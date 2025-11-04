@@ -1,0 +1,787 @@
+:root {
+    --primary-bg: #121212;
+    --secondary-bg: #1e1e1e;
+    --accent-color: #00e676;
+    --text-color: #e0e0e0;
+    --border-color: #2c2c2c;
+    --danger-color: #ff3b30;
+    --danger-hover: #c00;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.site-header {
+    width: 100%;
+    padding: 1rem 0;
+    background-color: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.main-nav .nav-link {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.main-nav .nav-link:hover,
+.main-nav .nav-link.active {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    transform: translateY(-2px);
+}
+
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    padding: 2rem;
+    text-align: center;
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.main-content .content-section:first-child:last-child {
+    max-width: 800px;
+    align-items: center;
+    margin: auto;
+}
+
+.content-section h1 {
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.content-section p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #aaa;
+}
+
+@media (max-width: 600px) {
+    .main-nav ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .main-nav .nav-link {
+        width: 100%;
+        text-align: center;
+        display: block;
+    }
+}
+
+/* --- Estilos de Formulário (Página Jogadores) --- */
+.form-section {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 2rem;
+    max-width: 100%;
+    margin-bottom: 2rem;
+}
+
+.player-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 900px;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    align-items: flex-end;
+}
+
+#form-row-bottom {
+    border-top: 2px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    color: #aaa;
+    text-align: left;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group input[type="file"],
+.form-group input[type="number"],
+.form-group select {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 250px;
+    font-family: inherit;
+}
+
+.form-group input[type="file"] {
+    color: #aaa;
+    padding: 0.6rem 0.75rem;
+}
+
+.form-group-check {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    height: auto;
+    padding: 0;
+    margin-bottom: 0.35rem;
+}
+
+.form-group-check label { padding: 0; }
+.form-group-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent-color);
+}
+
+.btn-submit {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: auto;
+}
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 230, 118, 0.3);
+}
+
+/* --- Estilos dos Cards (Página Jogadores) --- */
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1rem;
+    justify-content: center;
+}
+
+.player-card {
+    background-color: #1a2a3a;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 200px;
+    height: 280px;
+    margin: 0 auto;
+}
+.player-card.goleiro {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 4px 20px rgba(0, 230, 118, 0.4);
+}
+
+.btn-remover-jogador {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    font-size: 0.8rem;
+    line-height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.btn-remover-jogador:hover {
+    background-color: var(--danger-hover);
+    transform: scale(1.1);
+}
+
+.card-image-wrapper {
+    width: 100%;
+    height: 180px;
+    background-color: var(--primary-bg);
+    position: relative; 
+}
+.card-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-info {
+    flex-grow: 1;
+    padding: 0.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.player-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-color);
+    display: block;
+    margin-top: 1rem;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.25rem 0;
+}
+
+.player-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin-top: 0.5rem;
+}
+.player-gk-icon {
+    font-size: 1.75rem;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* --- Estilos do Modal de Recorte --- */
+.cropper-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 100;
+    display: none;
+}
+.cropper-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    z-index: 101;
+    display: none;
+    width: 90vw;
+    max-width: 600px;
+    text-align: center;
+}
+.cropper-modal h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+}
+.cropper-img-container {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 1.5rem;
+    background-color: var(--primary-bg);
+}
+#img-to-crop {
+    max-width: 100%;
+    max-height: 400px;
+}
+
+/* --- Estilos do Modal de Confirmação --- */
+.confirm-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 200;
+    display: none;
+}
+.confirm-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    z-index: 201;
+    display: none;
+    width: 90vw;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.confirm-modal h2 {
+    color: var(--danger-color);
+    margin-bottom: 1rem;
+}
+.confirm-modal p {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+.confirm-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.confirm-actions button {
+    flex-grow: 1;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-cancel {
+    background-color: #555;
+    color: var(--text-color);
+}
+.btn-cancel:hover { background-color: #777; }
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+.btn-danger:hover { background-color: var(--danger-hover); }
+
+/* --- Estilos das Notificações Toast --- */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.toast {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    border-left: 5px solid var(--accent-color);
+    animation: toast-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards, toast-out 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 3s forwards;
+}
+.toast.error { border-left-color: var(--danger-color); }
+.toast.success { border-left-color: var(--accent-color); }
+@keyframes toast-in {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toast-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* --- Estilos do Time do Mês --- */
+.team-builder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.team-builder-header div {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.team-builder-container {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr;
+    gap: 1.5rem;
+    width: 100%;
+    height: 70vh;
+}
+.player-pool-column, .team-column {
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.player-pool-column h2, .team-column h2 {
+    color: var(--accent-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+.team-section { margin-bottom: 1rem; }
+.team-section h3 {
+    color: #aaa;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-align: left;
+}
+.drop-zone {
+    background-color: var(--primary-bg);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem;
+    min-height: 80px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-content: flex-start;
+    transition: background-color 0.3s ease;
+}
+.player-pool {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.linha-slot { min-height: 120px; }
+.reserva-slot { min-height: 100px; }
+.goleiro-slot { min-height: 50px; }
+.drop-zone.drag-over {
+    background-color: #2a2a2a;
+    border-color: var(--accent-color);
+}
+.player-pill {
+    background-color: #1a2a3a;
+    color: var(--text-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: grab;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #444;
+}
+.player-pill:active {
+    cursor: grabbing;
+    opacity: 0.8;
+}
+.player-pill.goleiro-pill {
+    background-color: #004d40;
+    border-color: var(--accent-color);
+}
+
+/* --- Estilos da Caixinha --- */
+.caixinha-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.caixinha-saldo-card {
+    grid-column: 1 / 2;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+}
+.caixinha-saldo-card h2 {
+    color: #aaa;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+#saldo-total-display {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+.caixinha-form-card {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+.caixinha-form-card h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.caixinha-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.caixinha-form .form-group { width: 100%; }
+.caixinha-form input[type="text"],
+.caixinha-form input[type="number"],
+.caixinha-form select {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+    font-family: inherit;
+}
+.caixinha-form .btn-submit { margin-top: 1rem; }
+.caixinha-hist-card {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+.caixinha-hist-card h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.hist-transacoes-lista {
+    list-style: none;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 60vh;
+}
+.hist-transacoes-lista li {
+    background-color: var(--primary-bg);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid;
+}
+.hist-transacoes-lista li .info { text-align: left; }
+.hist-transacoes-lista li .info strong {
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+.hist-transacoes-lista li .info small { color: #aaa; }
+.hist-transacoes-lista li .valor {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.hist-transacoes-lista li.entrada { border-left-color: var(--accent-color); }
+.hist-transacoes-lista li.entrada .valor { color: var(--accent-color); }
+.hist-transacoes-lista li.saida { border-left-color: var(--danger-color); }
+.hist-transacoes-lista li.saida .valor { color: var(--danger-color); }
+
+/* --- Estilos de Pagamentos --- */
+.pagamentos-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: auto 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.pagamentos-config-card {
+    grid-column: 1 / 2;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+.pagamentos-config-card h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.pagamentos-config-card .form-group { width: 100%; }
+.pagamentos-config-card input[type="number"] {
+    background-color: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+    font-family: inherit;
+    margin-bottom: 1rem;
+}
+.pagamentos-resumo-card {
+    grid-column: 1 / 2;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+.pagamentos-resumo-card h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.resumo-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    gap: 1rem;
+}
+.resumo-item span { color: #aaa; }
+.resumo-item strong { color: var(--text-color); }
+.resumo-item.total strong {
+    color: var(--accent-color);
+    font-size: 1.3rem;
+}
+.pagamentos-lista-card {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+.pagamentos-lista-card h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.pagamentos-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.pagamentos-table thead th {
+    text-align: left;
+    padding: 0.75rem 0.5rem;
+    color: #aaa;
+    border-bottom: 2px solid var(--border-color);
+}
+.pagamentos-table tbody tr { border-bottom: 1px solid var(--border-color); }
+.pagamentos-table tbody tr:last-child { border-bottom: none; }
+.pagamentos-table tbody td {
+    padding: 1rem 0.5rem;
+    vertical-align: middle;
+}
+.pagamentos-table tbody td:first-child {
+    font-weight: bold;
+    color: var(--text-color);
+}
+.btn-pagamento {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+.btn-pagamento.pagar {
+    background-color: #0288d1;
+    color: white;
+}
+.btn-pagamento.pagar:hover { background-color: #01579b; }
+.btn-pagamento.cancelar {
+    background-color: #f57c00;
+    color: white;
+}
+.btn-pagamento.cancelar:hover { background-color: #e65100; }
+.btn-pagamento.isento {
+    background-color: #555;
+    color: #aaa;
+    cursor: not-allowed;
+}
+.btn-pagamento.pago {
+    background-color: #388e3c;
+    color: white;
+    cursor: not-allowed;
+}
+
+/* Botões de Perigo (Reset) */
+.danger-zone-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 1.5rem 0;
+}
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-danger:hover { background-color: var(--danger-hover); }
+.btn-danger-full {
+    width: 100%;
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-danger-full:hover { background-color: var(--danger-hover); }

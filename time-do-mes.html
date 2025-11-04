@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time do Mês - ProjetoFutebol</title>
+    <link rel="stylesheet" href="css/cropper.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/pagamentos" class="nav-link">Pagamentos</a></li>
+                <li><a href="/caixinha" class="nav-link">Caixinha</a></li>
+                <li><a href="/jogadores" class="nav-link">Jogadores</a></li>
+                <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <div class="team-builder-header">
+            <h1>Monte os Times do Mês</h1>
+            <div>
+                <button id="btn-gerar-times" class="btn-submit" style="background-color: #0288d1;">Gerar Times Aleatórios</button>
+                <button id="btn-limpar-times" class="btn-cancel">Limpar Times</button>
+                <button id="btn-salvar-times" class="btn-submit">Salvar Escalação</button>
+            </div>
+        </div>
+
+        <div class="team-builder-container" id="team-builder-container">
+            <div class="player-pool-column">
+                <h2>Jogadores Disponíveis</h2>
+                <div class="drop-zone player-pool" id="pool-disponiveis">
+                </div>
+            </div>
+            <div class="team-column">
+                <h2>Time 1</h2>
+                <div class="team-section">
+                    <h3>Goleiro (1)</h3>
+                    <div class="drop-zone goleiro-slot" id="time1-goleiro" data-max="1" data-pos="goleiro"></div>
+                </div>
+                <div class="team-section">
+                    <h3>Linha (5)</h3>
+                    <div class="drop-zone linha-slot" id="time1-linha" data-max="5" data-pos="linha"></div>
+                </div>
+                <div class="team-section">
+                    <h3>Reservas (4)</h3>
+                    <div class="drop-zone reserva-slot" id="time1-reservas" data-max="4" data-pos="reserva"></div>
+                </div>
+            </div>
+            <div class="team-column">
+                <h2>Time 2</h2>
+                <div class="team-section">
+                    <h3>Goleiro (1)</h3>
+                    <div class="drop-zone goleiro-slot" id="time2-goleiro" data-max="1" data-pos="goleiro"></div>
+                </div>
+                <div class="team-section">
+                    <h3>Linha (5)</h3>
+                    <div class="drop-zone linha-slot" id="time2-linha" data-max="5" data-pos="linha"></div>
+                </div>
+                <div class="team-section">
+                    <h3>Reservas (4)</h3>
+                    <div class="drop-zone reserva-slot" id="time2-reservas" data-max="4" data-pos="reserva"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="cropper-backdrop" id="cropper-backdrop"></div>
+    <div class="cropper-modal" id="cropper-modal"></div>
+    
+    <div class="confirm-backdrop" id="confirm-backdrop"></div>
+    <div class="confirm-modal" id="confirm-modal">
+        <h2>Atenção</h2>
+        <p id="confirm-modal-text">Você tem certeza?</p>
+        <div class="confirm-actions">
+            <button id="btn-confirm-no" class="btn-cancel">Cancelar</button>
+            <button id="btn-confirm-yes" class="btn-danger">Sim</button>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/cropper.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

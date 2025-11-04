@@ -1,0 +1,194 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+const app = express();
+const PORT = 3000;
+
+const JOGADORES_FILE = path.join(__dirname, 'data', 'jogadores.json');
+const TIMEDOMES_FILE = path.join(__dirname, 'data', 'time-do-mes.json');
+const CAIXINHA_FILE = path.join(__dirname, 'data', 'caixinha.json');
+const PAGAMENTOS_FILE = path.join(__dirname, 'data', 'pagamentos.json');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
+app.use(express.static(path.join(__dirname)));
+app.use(express.json());
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage: storage });
+
+// --- Funções Helper ---
+const readJsonFile = (filePath, defaultData) => {
+    try {
+        if (!fs.existsSync(filePath)) {
+            fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2), 'utf8');
+        }
+        const data = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error(`Erro ao ler arquivo ${filePath}:`, error);
+        return defaultData;
+    }
+};
+const writeJsonFile = (filePath, data) => {
+    try {
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) { console.error(`Erro ao escrever arquivo ${filePath}:`, error); }
+};
+
+// --- Funções Específicas ---
+const readJogadores = () => {
+    let jogadores = readJsonFile(JOGADORES_FILE, []);
+    let dataChanged = false;
+    jogadores.forEach(j => {
+        if (!j.id) { j.id = Date.now() + Math.random(); dataChanged = true; }
+    });
+    if (dataChanged) writeJsonFile(JOGADORES_FILE, jogadores);
+    return jogadores;
+};
+const writeJogadores = (data) => writeJsonFile(JOGADORES_FILE, data);
+const readTimeDoMes = () => readJsonFile(TIMEDOMES_FILE, { time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
+const writeTimeDoMes = (data) => writeJsonFile(TIMEDOMES_FILE, data);
+const readCaixinha = () => readJsonFile(CAIXINHA_FILE, { saldoTotal: 0, transacoes: [] });
+const writeCaixinha = (data) => writeJsonFile(CAIXINHA_FILE, data);
+const readPagamentos = () => readJsonFile(PAGAMENTOS_FILE, { valorChurrascoBase: 0, pagamentosJogadores: {} });
+const writePagamentos = (data) => writeJsonFile(PAGAMENTOS_FILE, data);
+
+// --- Rotas de Páginas ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/pagamentos', (req, res) => res.sendFile(path.join(__dirname, 'pagamentos.html')));
+app.get('/caixinha', (req, res) => res.sendFile(path.join(__dirname, 'caixinha.html')));
+app.get('/jogadores', (req, res) => res.sendFile(path.join(__dirname, 'jogadores.html')));
+app.get('/time-do-mes', (req, res) => res.sendFile(path.join(__dirname, 'time-do-mes.html')));
+
+// --- API de Jogadores ---
+app.get('/api/jogadores', (req, res) => res.json(readJogadores()));
+app.post('/api/jogadores', upload.single('foto'), (req, res) => { /* ... (sem mudança) ... */ });
+app.delete('/api/jogadores/:id', (req, res) => { /* ... (sem mudança) ... */ });
+
+// --- API do Time do Mês ---
+app.get('/api/time-do-mes', (req, res) => res.json(readTimeDoMes()));
+app.post('/api/time-do-mes', (req, res) => { /* ... (sem mudança) ... */ });
+
+// --- API da Caixinha ---
+app.get('/api/caixinha', (req, res) => res.json(readCaixinha()));
+app.post('/api/caixinha', (req, res) => { /* ... (sem mudança) ... */ });
+
+// --- APIs de Pagamentos ---
+app.get('/api/pagamentos', (req, res) => res.json(readPagamentos()));
+app.post('/api/pagamentos/config', (req, res) => { /* ... (sem mudança) ... */ });
+
+app.post('/api/pagamentos/pagar', (req, res) => {
+    const { jogadorId, jogadorNome, tipo, valor } = req.body;
+    
+    // 1. Verificação de Goleiro
+    if (tipo === 'mensalidade') {
+        const jogador = readJogadores().find(j => j.id == jogadorId);
+        if (jogador && jogador.isGoleiro) {
+            return res.status(400).json({ message: 'Goleiros são isentos da mensalidade.' });
+        }
+    }
+    
+    // 2. Adicionar transação na Caixinha
+    const caixinhaData = readCaixinha();
+    const descricao = tipo === 'mensalidade' ? 'Pagamento Mensalidade' : 'Pagamento Churrasco';
+    const novaTransacao = {
+        id: Date.now(), // ID da transação
+        data: new Date().toISOString(),
+        descricao: `${descricao} - ${jogadorNome}`,
+        valor: parseFloat(valor),
+        tipo: 'entrada',
+        jogadorId: jogadorId,
+        jogadorNome: jogadorNome
+    };
+    caixinhaData.saldoTotal += novaTransacao.valor;
+    caixinhaData.transacoes.unshift(novaTransacao);
+    writeCaixinha(caixinhaData);
+
+    // 3. Atualizar o status do pagamento COM O ID DA TRANSAÇÃO
+    const pagamentos = readPagamentos();
+    if (!pagamentos.pagamentosJogadores[jogadorId]) {
+        pagamentos.pagamentosJogadores[jogadorId] = {};
+    }
+    pagamentos.pagamentosJogadores[jogadorId][tipo] = novaTransacao.id; // Salva o ID
+    writePagamentos(pagamentos);
+
+    res.status(200).json({ pagamentos, caixinha: caixinhaData });
+});
+
+// --- NOVAS ROTAS DE CANCELAR E RESETAR ---
+
+app.post('/api/pagamentos/cancelar', (req, res) => {
+    const { jogadorId, tipo } = req.body;
+    const pagamentos = readPagamentos();
+    
+    if (!pagamentos.pagamentosJogadores[jogadorId] || !pagamentos.pagamentosJogadores[jogadorId][tipo]) {
+        return res.status(404).json({ message: 'Pagamento não encontrado.' });
+    }
+    
+    const transacaoId = pagamentos.pagamentosJogadores[jogadorId][tipo];
+    const caixinhaData = readCaixinha();
+    
+    const transacaoIndex = caixinhaData.transacoes.findIndex(t => t.id === transacaoId);
+    if (transacaoIndex === -1) {
+        return res.status(404).json({ message: 'Transação na caixinha não encontrada.' });
+    }
+    
+    // Remove a transação e reverte o saldo
+    const transacaoRemovida = caixinhaData.transacoes.splice(transacaoIndex, 1)[0];
+    caixinhaData.saldoTotal -= transacaoRemovida.valor;
+    writeCaixinha(caixinhaData);
+    
+    // Reseta o pagamento
+    pagamentos.pagamentosJogadores[jogadorId][tipo] = null;
+    writePagamentos(pagamentos);
+    
+    res.status(200).json({ pagamentos, caixinha: caixinhaData });
+});
+
+app.post('/api/pagamentos/reset', (req, res) => {
+    const pagamentos = readPagamentos();
+    pagamentos.pagamentosJogadores = {};
+    writePagamentos(pagamentos);
+    res.status(200).json(pagamentos);
+});
+
+app.post('/api/caixinha/reset', (req, res) => {
+    writeCaixinha({ saldoTotal: 0, transacoes: [] });
+    res.status(200).json({ message: 'Caixinha zerada.' });
+});
+
+app.post('/api/time-do-mes/reset', (req, res) => {
+    writeTimeDoMes({ time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
+    res.status(200).json({ message: 'Times limpos.' });
+});
+
+app.post('/api/jogadores/reset', (req, res) => {
+    // 1. Deletar fotos
+    fs.readdir(UPLOADS_DIR, (err, files) => {
+        if (err) console.error("Erro ao ler diretório de uploads:", err);
+        if (files) {
+            for (const file of files) {
+                fs.unlink(path.join(UPLOADS_DIR, file), err => {
+                    if (err) console.error(`Erro ao deletar ${file}:`, err);
+                });
+            }
+        }
+    });
+
+    // 2. Zerar arquivos de dados dependentes
+    writeJogadores([]);
+    writePagamentos({ valorChurrascoBase: 0, pagamentosJogadores: {} });
+    writeTimeDoMes({ time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
+    
+    res.status(200).json({ message: 'Todos os jogadores, pagamentos e times foram removidos.' });
+});
+
+// --- Iniciar Servidor ---
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+});

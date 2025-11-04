@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogadores - ProjetoFutebol</title>
+    <link rel="stylesheet" href="css/cropper.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/pagamentos" class="nav-link">Pagamentos</a></li>
+                <li><a href="/caixinha" class="nav-link">Caixinha</a></li>
+                <li><a href="/jogadores" class="nav-link">Jogadores</a></li>
+                <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="content-section form-section">
+            <h1>Cadastrar Novo Jogador</h1>
+            <form id="form-add-jogador" class="player-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome-jogador">Nome:</label>
+                        <input type="text" id="nome-jogador" name="nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="foto-jogador">Foto do Jogador:</label>
+                        <input type="file" id="foto-jogador" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-row" id="form-row-bottom">
+                    <div class="form-group form-group-check">
+                        <label for="goleiro-jogador">É Goleiro?</label>
+                        <input type="checkbox" id="goleiro-jogador" name="isGoleiro">
+                    </div>
+                    <button type="submit" class="btn-submit">Adicionar Jogador</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="content-section" style="max-width: 100%;">
+            <div class="team-builder-header">
+                <h1>Jogadores Cadastrados</h1>
+                <button id="btn-reset-jogadores" class="btn-danger">Remover Todos</button>
+            </div>
+            <div id="lista-jogadores" class="player-grid">
+            </div>
+        </section>
+    </main>
+    
+    <div class="cropper-backdrop" id="cropper-backdrop"></div>
+    <div class="cropper-modal" id="cropper-modal">
+        <h2>Recortar Imagem</h2>
+        <div class="cropper-img-container">
+            <img id="img-to-crop">
+        </div>
+        <button id="btn-confirm-crop" class="btn-submit">Confirmar Recorte</button>
+    </div>
+
+    <div class="confirm-backdrop" id="confirm-backdrop"></div>
+    <div class="confirm-modal" id="confirm-modal">
+        <h2>Remover Jogador</h2>
+        <p id="confirm-modal-text">Você tem certeza que deseja remover este jogador?</p>
+        <div class="confirm-actions">
+            <button id="btn-confirm-no" class="btn-cancel">Cancelar</button>
+            <button id="btn-confirm-yes" class="btn-danger">Sim, Remover</button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/cropper.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

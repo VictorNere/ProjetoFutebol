@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - ProjetoFutebol</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/pagamentos" class="nav-link">Pagamentos</a></li>
+                <li><a href="/caixinha" class="nav-link">Caixinha</a></li>
+                <li><a href="/jogadores" class="nav-link">Jogadores</a></li>
+                <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="content-section">
+            <h1>Bem-vindo ao ProjetoFutebol</h1>
+            <p>Organização do nosso futebol de quinta-feira.</p>
+            <p>Utilize o menu acima para navegar entre as seções.</p>
+        </section>
+    </main>
+    
+    <div class="cropper-backdrop" id="cropper-backdrop"></div>
+    <div class="cropper-modal" id="cropper-modal"></div>
+    
+    <div class="confirm-backdrop" id="confirm-backdrop"></div>
+    <div class="confirm-modal" id="confirm-modal">
+        <h2>Atenção</h2>
+        <p id="confirm-modal-text">Você tem certeza?</p>
+        <div class="confirm-actions">
+            <button id="btn-confirm-no" class="btn-cancel">Cancelar</button>
+            <button id="btn-confirm-yes" class="btn-danger">Sim</button>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script src="js/cropper.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

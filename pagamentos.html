@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamentos - ProjetoFutebol</title>
+    <link rel="stylesheet" href="css/cropper.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="main-nav">
+            <ul>
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/pagamentos" class="nav-link">Pagamentos</a></li>
+                <li><a href="/caixinha" class="nav-link">Caixinha</a></li>
+                <li><a href="/jogadores" class="nav-link">Jogadores</a></li>
+                <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <section class="content-section">
+            <h1>Controle de Pagamentos</h1>
+        </section>
+        <div class="pagamentos-grid">
+            <div class="pagamentos-config-card">
+                <h2>Configurações do Mês</h2>
+                <div class="form-group">
+                    <label for="valor-churrasco">Valor do Churrasco (R$)</label>
+                    <input type="number" id="valor-churrasco" step="0.01" min="0" placeholder="Ex: 25.50">
+                </div>
+                <button id="btn-salvar-churrasco" class="btn-submit">Salvar Valor</button>
+                <hr class="danger-zone-divider">
+                <button id="btn-reset-pagamentos" class="btn-danger-full">Zerar Pagamentos do Mês</button>
+            </div>
+            <div class="pagamentos-resumo-card">
+                <h2>Resumo</h2>
+                <div class="resumo-item">
+                    <span>Total de Jogadores:</span>
+                    <strong id="resumo-jogadores">0</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Mensalidade por Jogador:</span>
+                    <strong id="resumo-mensalidade">R$ 0,00</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Churrasco por Jogador:</span>
+                    <strong id="resumo-churrasco">R$ 0,00</strong>
+                </div>
+                <div class="resumo-item total">
+                    <span>Total Arrecadado (Caixinha):</span>
+                    <strong id="resumo-arrecadado">R$ 0,00</strong>
+                </div>
+            </div>
+            <div class="pagamentos-lista-card">
+                <h2>Lista de Pagamentos</h2>
+                <table class="pagamentos-table">
+                    <thead>
+                        <tr>
+                            <th>Jogador</th>
+                            <th>Mensalidade</th>
+                            <th>Churrasco</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pagamentos-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <div class="cropper-backdrop" id="cropper-backdrop"></div>
+    <div class="cropper-modal" id="cropper-modal"></div>
+    <div class="confirm-backdrop" id="confirm-backdrop"></div>
+    <div class="confirm-modal" id="confirm-modal">
+        <h2>Remover Jogador</h2>
+        <p id="confirm-modal-text">Você tem certeza que deseja remover este jogador?</p>
+        <div class="confirm-actions">
+            <button id="btn-confirm-no" class="btn-cancel">Cancelar</button>
+            <button id="btn-confirm-yes" class="btn-danger">Sim, Remover</button>
+        </div>
+    </div>
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/cropper.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
