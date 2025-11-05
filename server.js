@@ -2,61 +2,91 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+require('dotenv').config(); // Carrega o .env
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // Importante para o Render
 
-const JOGADORES_FILE = path.join(__dirname, 'data', 'jogadores.json');
-const TIMEDOMES_FILE = path.join(__dirname, 'data', 'time-do-mes.json');
-const CAIXINHA_FILE = path.join(__dirname, 'data', 'caixinha.json');
-const PAGAMENTOS_FILE = path.join(__dirname, 'data', 'pagamentos.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// --- CONFIGURAÇÃO DO BANCO DE DADOS (MongoDB) ---
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Conectado ao MongoDB Atlas'))
+    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
-app.use(express.static(path.join(__dirname)));
-app.use(express.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
+// Model para Jogadores
+const jogadorSchema = new mongoose.Schema({
+    id: { type: Number, unique: true, index: true },
+    nome: String,
+    isGoleiro: Boolean,
+    foto: String,
+    fotoPublicId: String // Para deletar do Cloudinary
+});
+const Jogador = mongoose.model('Jogador', jogadorSchema);
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+// Model para Caixinha (documento único)
+const caixinhaSchema = new mongoose.Schema({
+    docId: { type: String, default: 'main', unique: true },
+    saldoTotal: { type: Number, default: 0 },
+    transacoes: [{
+        id: Number,
+        data: String,
+        descricao: String,
+        valor: Number,
+        tipo: String,
+        jogadorId: String,
+        jogadorNome: String
+    }]
+});
+const Caixinha = mongoose.model('Caixinha', caixinhaSchema);
+
+// Model para Pagamentos (documento único)
+const pagamentosSchema = new mongoose.Schema({
+    docId: { type: String, default: 'main', unique: true },
+    valorChurrascoBase: { type: Number, default: 0 },
+    pagamentosJogadores: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} }
+});
+const Pagamentos = mongoose.model('Pagamentos', pagamentosSchema);
+
+// Model para Time do Mês (documento único)
+const timeDoMesSchema = new mongoose.Schema({
+    docId: { type: String, default: 'main', unique: true },
+    time1: { goleiro: Number, linha: [Number], reservas: [Number] },
+    time2: { goleiro: Number, linha: [Number], reservas: [Number] }
+});
+const TimeDoMes = mongoose.model('TimeDoMes', timeDoMesSchema);
+
+// Funções Helper para "documento único"
+const findOrCreate = async (model, defaultData) => {
+    let doc = await model.findOne({ docId: 'main' });
+    if (!doc) {
+        doc = await model.create(defaultData);
+    }
+    return doc;
+};
+
+// --- CONFIGURAÇÃO DO UPLOAD (Cloudinary) ---
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+    api_key: process.env.CLOUDINARY_API_KEY, 
+    api_secret: process.env.CLOUDINARY_API_SECRET 
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'ProjetoFutebol',
+        format: async (req, file) => 'jpg',
+        public_id: (req, file) => `jogador_${Date.now()}`,
+    },
 });
 const upload = multer({ storage: storage });
 
-// --- Funções Helper ---
-const readJsonFile = (filePath, defaultData) => {
-    try {
-        if (!fs.existsSync(filePath)) {
-            fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2), 'utf8');
-        }
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`Erro ao ler arquivo ${filePath}:`, error);
-        return defaultData;
-    }
-};
-const writeJsonFile = (filePath, data) => {
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (error) { console.error(`Erro ao escrever arquivo ${filePath}:`, error); }
-};
-
-// --- Funções Específicas ---
-const readJogadores = () => {
-    let jogadores = readJsonFile(JOGADORES_FILE, []);
-    let dataChanged = false;
-    jogadores.forEach(j => {
-        if (!j.id) { j.id = Date.now() + Math.random(); dataChanged = true; }
-    });
-    if (dataChanged) writeJsonFile(JOGADORES_FILE, jogadores);
-    return jogadores;
-};
-const writeJogadores = (data) => writeJsonFile(JOGADORES_FILE, data);
-const readTimeDoMes = () => readJsonFile(TIMEDOMES_FILE, { time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
-const writeTimeDoMes = (data) => writeJsonFile(TIMEDOMES_FILE, data);
-const readCaixinha = () => readJsonFile(CAIXINHA_FILE, { saldoTotal: 0, transacoes: [] });
-const writeCaixinha = (data) => writeJsonFile(CAIXINHA_FILE, data);
-const readPagamentos = () => readJsonFile(PAGAMENTOS_FILE, { valorChurrascoBase: 0, pagamentosJogadores: {} });
-const writePagamentos = (data) => writeJsonFile(PAGAMENTOS_FILE, data);
+// --- Middlewares ---
+app.use(express.static(path.join(__dirname)));
+app.use(express.json());
+// Não precisamos mais servir /uploads/ estaticamente
 
 // --- Rotas de Páginas ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
@@ -66,207 +96,198 @@ app.get('/jogadores', (req, res) => res.sendFile(path.join(__dirname, 'jogadores
 app.get('/time-do-mes', (req, res) => res.sendFile(path.join(__dirname, 'time-do-mes.html')));
 
 // --- API de Jogadores ---
-app.get('/api/jogadores', (req, res) => res.json(readJogadores()));
+app.get('/api/jogadores', async (req, res) => {
+    const jogadores = await Jogador.find().sort({ nome: 1 });
+    res.json(jogadores);
+});
 
-app.post('/api/jogadores', upload.single('foto'), (req, res) => {
-    const jogadores = readJogadores();
-    const novoJogador = {
+app.post('/api/jogadores', upload.single('foto'), async (req, res) => {
+    const novoJogador = new Jogador({
         id: Date.now(),
         nome: req.body.nome,
         isGoleiro: req.body.isGoleiro === 'true',
-        foto: req.file ? `/uploads/${req.file.filename}` : ''
-    };
-    jogadores.push(novoJogador);
-    writeJogadores(jogadores);
+        foto: req.file ? req.file.path : '', // URL segura do Cloudinary
+        fotoPublicId: req.file ? req.file.filename : null // ID para deletar
+    });
+    await novoJogador.save();
     res.status(201).json(novoJogador);
 });
 
-// --- ROTA DE EDIÇÃO (PUT) ATUALIZADA ---
-app.put('/api/jogadores/:id', upload.single('foto'), (req, res) => {
-    let jogadores = readJogadores();
+app.put('/api/jogadores/:id', upload.single('foto'), async (req, res) => {
     const jogadorId = Number(req.params.id);
-    const jogadorIndex = jogadores.findIndex(j => j.id === jogadorId);
+    const jogador = await Jogador.findOne({ id: jogadorId });
+    if (!jogador) return res.status(404).json({ message: 'Jogador não encontrado' });
 
-    if (jogadorIndex === -1) {
-        return res.status(404).json({ message: 'Jogador não encontrado' });
-    }
-
-    const jogador = jogadores[jogadorIndex];
-
-    // Se uma nova foto foi enviada
     if (req.file) {
-        // 1. Deletar a foto antiga, se ela existir
-        if (jogador.foto) {
-            const oldFotoPath = path.join(__dirname, jogador.foto);
-            if (fs.existsSync(oldFotoPath)) {
-                fs.unlink(oldFotoPath, (err) => {
-                    if (err) console.error("Erro ao deletar foto antiga:", err);
-                });
-            }
+        if (jogador.fotoPublicId) {
+            await cloudinary.uploader.destroy(jogador.fotoPublicId);
         }
-        // 2. Atualizar com o caminho da nova foto
-        jogador.foto = `/uploads/${req.file.filename}`;
+        jogador.foto = req.file.path;
+        jogador.fotoPublicId = req.file.filename;
     }
-
-    // 3. Atualizar nome e status de goleiro
     jogador.nome = req.body.nome || jogador.nome;
     jogador.isGoleiro = req.body.isGoleiro === 'true';
-
-    // 4. Salvar o array de jogadores atualizado
-    jogadores[jogadorIndex] = jogador;
-    writeJogadores(jogadores);
-
-    res.status(200).json(jogador); // Retorna o jogador atualizado
+    await jogador.save();
+    res.status(200).json(jogador);
 });
 
-app.delete('/api/jogadores/:id', (req, res) => {
-    let jogadores = readJogadores();
+app.delete('/api/jogadores/:id', async (req, res) => {
     const jogadorId = Number(req.params.id);
-    const jogadorParaRemover = jogadores.find(j => j.id === jogadorId);
-    const novosJogadores = jogadores.filter(j => j.id !== jogadorId);
-    if (jogadores.length === novosJogadores.length) return res.status(404).json({ message: 'Jogador não encontrado' });
-    if (jogadorParaRemover && jogadorParaRemover.foto) {
-        fs.unlink(path.join(__dirname, jogadorParaRemover.foto), (err) => { if (err) console.error("Erro ao deletar foto:", err); });
+    const jogador = await Jogador.findOneAndDelete({ id: jogadorId });
+    if (!jogador) return res.status(404).json({ message: 'Jogador não encontrado' });
+    if (jogador.fotoPublicId) {
+        await cloudinary.uploader.destroy(jogador.fotoPublicId);
     }
-    writeJogadores(novosJogadores);
     res.status(200).json({ message: 'Jogador removido com sucesso' });
 });
 
 // --- API do Time do Mês ---
-app.get('/api/time-do-mes', (req, res) => res.json(readTimeDoMes()));
-app.post('/api/time-do-mes', (req, res) => {
-    writeTimeDoMes(req.body);
+app.get('/api/time-do-mes', async (req, res) => {
+    res.json(await findOrCreate(TimeDoMes, { docId: 'main', time1: {}, time2: {} }));
+});
+app.post('/api/time-do-mes', async (req, res) => {
+    const data = req.body;
+    await TimeDoMes.findOneAndUpdate({ docId: 'main' }, data, { upsert: true });
     res.status(200).json({ message: 'Times salvos com sucesso!' });
 });
 
 // --- API da Caixinha ---
-app.get('/api/caixinha', (req, res) => res.json(readCaixinha()));
-app.post('/api/caixinha', (req, res) => {
-    const caixinhaData = readCaixinha();
+app.get('/api/caixinha', async (req, res) => {
+    res.json(await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] }));
+});
+app.post('/api/caixinha', async (req, res) => {
+    const caixinhaData = await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] });
     const novaTransacao = req.body;
     novaTransacao.id = Date.now();
     novaTransacao.data = new Date().toISOString();
+    
     if (novaTransacao.tipo === 'entrada') {
         caixinhaData.saldoTotal += novaTransacao.valor;
     } else {
         caixinhaData.saldoTotal -= novaTransacao.valor;
     }
     caixinhaData.transacoes.unshift(novaTransacao);
-    writeCaixinha(caixinhaData);
+    await caixinhaData.save();
     res.status(201).json(caixinhaData);
 });
 
 // --- APIs de Pagamentos ---
-app.get('/api/pagamentos', (req, res) => res.json(readPagamentos()));
-app.post('/api/pagamentos/config', (req, res) => {
+app.get('/api/pagamentos', async (req, res) => {
+    res.json(await findOrCreate(Pagamentos, { docId: 'main', valorChurrascoBase: 0, pagamentosJogadores: {} }));
+});
+app.post('/api/pagamentos/config', async (req, res) => {
     const { valorChurrascoBase } = req.body;
-    const pagamentos = readPagamentos();
-    pagamentos.valorChurrascoBase = parseFloat(valorChurrascoBase) || 0;
-    writePagamentos(pagamentos);
+    const pagamentos = await Pagamentos.findOneAndUpdate(
+        { docId: 'main' },
+        { valorChurrascoBase: parseFloat(valorChurrascoBase) || 0 },
+        { new: true, upsert: true }
+    );
     res.status(200).json(pagamentos);
 });
 
-app.post('/api/pagamentos/pagar', (req, res) => {
+app.post('/api/pagamentos/pagar', async (req, res) => {
     const { jogadorId, jogadorNome, tipo, valor } = req.body;
     
     if (tipo === 'mensalidade') {
-        const jogador = readJogadores().find(j => j.id == jogadorId);
+        const jogador = await Jogador.findOne({ id: Number(jogadorId) });
         if (jogador && jogador.isGoleiro) {
             return res.status(400).json({ message: 'Goleiros são isentos da mensalidade.' });
         }
     }
     
-    const pagamentos = readPagamentos();
-    if (!pagamentos.pagamentosJogadores[jogadorId]) {
-        pagamentos.pagamentosJogadores[jogadorId] = {};
-    }
-    if (pagamentos.pagamentosJogadores[jogadorId][tipo]) {
+    const pagamentos = await findOrCreate(Pagamentos, { docId: 'main', valorChurrascoBase: 0, pagamentosJogadores: {} });
+    if (pagamentos.pagamentosJogadores.get(String(jogadorId))?.[tipo]) {
         return res.status(400).json({ message: 'Este jogador já pagou esta taxa.' });
     }
 
-    const caixinhaData = readCaixinha();
-    const descricao = tipo === 'mensalidade' ? 'Pagamento Mensalidade' : 'Pagamento Churrasco';
+    const caixinhaData = await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] });
     const novaTransacao = {
-        id: Date.now(),
-        data: new Date().toISOString(),
-        descricao: `${descricao} - ${jogadorNome}`,
-        valor: parseFloat(valor),
-        tipo: 'entrada',
-        jogadorId: jogadorId,
-        jogadorNome: jogadorNome
+        id: Date.now(), data: new Date().toISOString(),
+        descricao: tipo === 'mensalidade' ? 'Pagamento Mensalidade' : 'Pagamento Churrasco',
+        valor: parseFloat(valor), tipo: 'entrada', jogadorId: jogadorId, jogadorNome: jogadorNome
     };
     caixinhaData.saldoTotal += novaTransacao.valor;
     caixinhaData.transacoes.unshift(novaTransacao);
-    writeCaixinha(caixinhaData);
+    await caixinhaData.save();
 
-    pagamentos.pagamentosJogadores[jogadorId][tipo] = novaTransacao.id;
-    writePagamentos(pagamentos);
+    if (!pagamentos.pagamentosJogadores.get(String(jogadorId))) {
+        pagamentos.pagamentosJogadores.set(String(jogadorId), {});
+    }
+    pagamentos.pagamentosJogadores.get(String(jogadorId))[tipo] = novaTransacao.id;
+    pagamentos.markModified('pagamentosJogadores'); // Precisa disso para salvar o Map
+    await pagamentos.save();
 
     res.status(200).json({ pagamentos, caixinha: caixinhaData });
 });
 
 // --- Rotas de Cancelar e Resetar ---
-app.post('/api/pagamentos/cancelar', (req, res) => {
+app.post('/api/pagamentos/cancelar', async (req, res) => {
     const { jogadorId, tipo } = req.body;
-    const pagamentos = readPagamentos();
+    const pagamentos = await findOrCreate(Pagamentos, { docId: 'main', valorChurrascoBase: 0, pagamentosJogadores: {} });
     
-    if (!pagamentos.pagamentosJogadores[jogadorId] || !pagamentos.pagamentosJogadores[jogadorId][tipo]) {
+    const pagamentosDoJogador = pagamentos.pagamentosJogadores.get(String(jogadorId));
+    if (!pagamentosDoJogador || !pagamentosDoJogador[tipo]) {
         return res.status(404).json({ message: 'Pagamento não encontrado.' });
     }
     
-    const transacaoId = pagamentos.pagamentosJogadores[jogadorId][tipo];
-    const caixinhaData = readCaixinha();
+    const transacaoId = pagamentosDoJogador[tipo];
+    const caixinhaData = await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] });
     
     const transacaoIndex = caixinhaData.transacoes.findIndex(t => t.id === transacaoId);
     if (transacaoIndex === -1) {
-        pagamentos.pagamentosJogadores[jogadorId][tipo] = null;
-        writePagamentos(pagamentos);
+        pagamentosDoJogador[tipo] = null;
+        await pagamentos.save();
         return res.status(404).json({ message: 'Transação na caixinha não encontrada, mas pagamento foi resetado.' });
     }
     
     const transacaoRemovida = caixinhaData.transacoes.splice(transacaoIndex, 1)[0];
     caixinhaData.saldoTotal -= transacaoRemovida.valor;
-    writeCaixinha(caixinhaData);
+    await caixinhaData.save();
     
-    pagamentos.pagamentosJogadores[jogadorId][tipo] = null;
-    writePagamentos(pagamentos);
+    pagamentosDoJogador[tipo] = null;
+    pagamentos.markModified('pagamentosJogadores');
+    await pagamentos.save();
     
     res.status(200).json({ pagamentos, caixinha: caixinhaData });
 });
 
-app.post('/api/pagamentos/reset', (req, res) => {
-    const pagamentos = readPagamentos();
-    pagamentos.pagamentosJogadores = {};
-    writePagamentos(pagamentos);
+app.post('/api/pagamentos/reset', async (req, res) => {
+    const pagamentos = await Pagamentos.findOneAndUpdate(
+        { docId: 'main' },
+        { pagamentosJogadores: {} },
+        { new: true, upsert: true }
+    );
     res.status(200).json(pagamentos);
 });
 
-app.post('/api/caixinha/reset', (req, res) => {
-    writeCaixinha({ saldoTotal: 0, transacoes: [] });
+app.post('/api/caixinha/reset', async (req, res) => {
+    await Caixinha.findOneAndUpdate(
+        { docId: 'main' },
+        { saldoTotal: 0, transacoes: [] },
+        { new: true, upsert: true }
+    );
     res.status(200).json({ message: 'Caixinha zerada.' });
 });
 
-app.post('/api/time-do-mes/reset', (req, res) => {
-    writeTimeDoMes({ time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
+app.post('/api/time-do-mes/reset', async (req, res) => {
+    await TimeDoMes.findOneAndUpdate(
+        { docId: 'main' },
+        { time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] } },
+        { new: true, upsert: true }
+    );
     res.status(200).json({ message: 'Times limpos.' });
 });
 
-app.post('/api/jogadores/reset', (req, res) => {
-    fs.readdir(UPLOADS_DIR, (err, files) => {
-        if (err) console.error("Erro ao ler diretório de uploads:", err);
-        if (files) {
-            for (const file of files) {
-                if(file === '.gitkeep') continue;
-                fs.unlink(path.join(UPLOADS_DIR, file), err => {
-                    if (err) console.error(`Erro ao deletar ${file}:`, err);
-                });
-            }
+app.post('/api/jogadores/reset', async (req, res) => {
+    const jogadores = await Jogador.find();
+    for (const jogador of jogadores) {
+        if (jogador.fotoPublicId) {
+            await cloudinary.uploader.destroy(jogador.fotoPublicId);
         }
-    });
-
-    writeJogadores([]);
-    writePagamentos({ valorChurrascoBase: 0, pagamentosJogadores: {} });
-    writeTimeDoMes({ time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
+    }
+    await Jogador.deleteMany({});
+    await Pagamentos.deleteMany({});
+    await TimeDoMes.deleteMany({});
     
     res.status(200).json({ message: 'Todos os jogadores, pagamentos e times foram removidos.' });
 });
