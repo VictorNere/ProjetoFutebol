@@ -458,7 +458,7 @@ body {
     grid-template-columns: 1fr 1.5fr 1.5fr;
     gap: 1.5rem;
     width: 100%;
-    height: 70vh;
+    min-height: 70vh; /* min-height para ser flexível */
 }
 .player-pool-column, .team-column {
     background-color: var(--secondary-bg);
@@ -497,6 +497,7 @@ body {
 .player-pool {
     flex-grow: 1;
     overflow-y: auto;
+    height: 60vh; /* Altura definida para o scroll */
 }
 .linha-slot { min-height: 120px; }
 .reserva-slot { min-height: 100px; }
@@ -571,9 +572,9 @@ body {
     gap: 1rem;
 }
 .caixinha-form .form-group { width: 100%; }
-.caixinha-form input[type="text"],
-.caixinha-form input[type="number"],
-.caixinha-form select {
+.caixinha-form .form-group input[type="text"],
+.caixinha-form .form-group input[type="number"],
+.caixinha-form .form-group select {
     background-color: var(--primary-bg);
     border: 1px solid var(--border-color);
     color: var(--text-color);

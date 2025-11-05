@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": 1762359614463,
+    "nome": "Victor",
+    "isGoleiro": false,
+    "foto": "/uploads/1762359614461.jpg"
+  },
+  {
+    "id": 1762359721254,
+    "nome": "Kareon",
+    "isGoleiro": false,
+    "foto": "/uploads/1762359721251.jpg"
+  }
+]

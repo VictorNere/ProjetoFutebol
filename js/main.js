@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Modal de confirmação não encontrado no HTML desta página.');
             // Fallback para o alert feio se o HTML estiver quebrado
             if (confirm(text)) {
-                callback();
+                if(callback) callback();
             }
             return;
         }
@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let btnMensalidade;
                 if (jogador.isGoleiro) {
                     btnMensalidade = `<button class="btn-pagamento isento" disabled>Isento</button>`;
-                } else if (status.mensalidade) {
+                } else if (status.mensalidade) { // Se tem um ID de transação, está pago
                     btnMensalidade = `<button class="btn-pagamento cancelar" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
                     totalArrecadado += valorMensalidadePorJogador;
                 } else {
@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Botão Churrasco
                 let btnChurrasco;
-                if (status.churrasco) {
+                if (status.churrasco) { // Se tem um ID de transação, está pago
                     btnChurrasco = `<button class="btn-pagamento cancelar" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
                     totalArrecadado += pagamentosData.valorChurrascoBase;
                 } else {
@@ -626,7 +626,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('Pagamento registrado!', 'success');
                 } catch (error) {
                     showToast(error.message, 'error');
-                    // btn.disabled = false; // O renderPagamentos() vai recriar o botão
                 }
 
             } else if (btn.classList.contains('cancelar')) {
@@ -647,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast('Pagamento cancelado!', 'success');
                     } catch (error) {
                         showToast(error.message, 'error');
-                        // btn.disabled = false; // O renderPagamentos() vai recriar o botão
                     }
                 });
             }

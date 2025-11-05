@@ -67,25 +67,70 @@ app.get('/time-do-mes', (req, res) => res.sendFile(path.join(__dirname, 'time-do
 
 // --- API de Jogadores ---
 app.get('/api/jogadores', (req, res) => res.json(readJogadores()));
-app.post('/api/jogadores', upload.single('foto'), (req, res) => { /* ... (sem mudança) ... */ });
-app.delete('/api/jogadores/:id', (req, res) => { /* ... (sem mudança) ... */ });
+
+app.post('/api/jogadores', upload.single('foto'), (req, res) => {
+    const jogadores = readJogadores();
+    const novoJogador = {
+        id: Date.now(),
+        nome: req.body.nome,
+        isGoleiro: req.body.isGoleiro === 'true',
+        foto: req.file ? `/uploads/${req.file.filename}` : ''
+    };
+    jogadores.push(novoJogador);
+    writeJogadores(jogadores);
+    res.status(201).json(novoJogador);
+});
+
+app.delete('/api/jogadores/:id', (req, res) => {
+    let jogadores = readJogadores();
+    const jogadorId = Number(req.params.id);
+    const jogadorParaRemover = jogadores.find(j => j.id === jogadorId);
+    const novosJogadores = jogadores.filter(j => j.id !== jogadorId);
+    if (jogadores.length === novosJogadores.length) return res.status(404).json({ message: 'Jogador não encontrado' });
+    if (jogadorParaRemover && jogadorParaRemover.foto) {
+        fs.unlink(path.join(__dirname, jogadorParaRemover.foto), (err) => { if (err) console.error("Erro ao deletar foto:", err); });
+    }
+    writeJogadores(novosJogadores);
+    res.status(200).json({ message: 'Jogador removido com sucesso' });
+});
 
 // --- API do Time do Mês ---
 app.get('/api/time-do-mes', (req, res) => res.json(readTimeDoMes()));
-app.post('/api/time-do-mes', (req, res) => { /* ... (sem mudança) ... */ });
+app.post('/api/time-do-mes', (req, res) => {
+    writeTimeDoMes(req.body);
+    res.status(200).json({ message: 'Times salvos com sucesso!' });
+});
 
 // --- API da Caixinha ---
 app.get('/api/caixinha', (req, res) => res.json(readCaixinha()));
-app.post('/api/caixinha', (req, res) => { /* ... (sem mudança) ... */ });
+app.post('/api/caixinha', (req, res) => {
+    const caixinhaData = readCaixinha();
+    const novaTransacao = req.body;
+    novaTransacao.id = Date.now();
+    novaTransacao.data = new Date().toISOString();
+    if (novaTransacao.tipo === 'entrada') {
+        caixinhaData.saldoTotal += novaTransacao.valor;
+    } else {
+        caixinhaData.saldoTotal -= novaTransacao.valor;
+    }
+    caixinhaData.transacoes.unshift(novaTransacao);
+    writeCaixinha(caixinhaData);
+    res.status(201).json(caixinhaData);
+});
 
 // --- APIs de Pagamentos ---
 app.get('/api/pagamentos', (req, res) => res.json(readPagamentos()));
-app.post('/api/pagamentos/config', (req, res) => { /* ... (sem mudança) ... */ });
+app.post('/api/pagamentos/config', (req, res) => {
+    const { valorChurrascoBase } = req.body;
+    const pagamentos = readPagamentos();
+    pagamentos.valorChurrascoBase = parseFloat(valorChurrascoBase) || 0;
+    writePagamentos(pagamentos);
+    res.status(200).json(pagamentos);
+});
 
 app.post('/api/pagamentos/pagar', (req, res) => {
     const { jogadorId, jogadorNome, tipo, valor } = req.body;
     
-    // 1. Verificação de Goleiro
     if (tipo === 'mensalidade') {
         const jogador = readJogadores().find(j => j.id == jogadorId);
         if (jogador && jogador.isGoleiro) {
@@ -93,11 +138,18 @@ app.post('/api/pagamentos/pagar', (req, res) => {
         }
     }
     
-    // 2. Adicionar transação na Caixinha
+    const pagamentos = readPagamentos();
+    if (!pagamentos.pagamentosJogadores[jogadorId]) {
+        pagamentos.pagamentosJogadores[jogadorId] = {};
+    }
+    if (pagamentos.pagamentosJogadores[jogadorId][tipo]) {
+        return res.status(400).json({ message: 'Este jogador já pagou esta taxa.' });
+    }
+
     const caixinhaData = readCaixinha();
     const descricao = tipo === 'mensalidade' ? 'Pagamento Mensalidade' : 'Pagamento Churrasco';
     const novaTransacao = {
-        id: Date.now(), // ID da transação
+        id: Date.now(),
         data: new Date().toISOString(),
         descricao: `${descricao} - ${jogadorNome}`,
         valor: parseFloat(valor),
@@ -109,19 +161,13 @@ app.post('/api/pagamentos/pagar', (req, res) => {
     caixinhaData.transacoes.unshift(novaTransacao);
     writeCaixinha(caixinhaData);
 
-    // 3. Atualizar o status do pagamento COM O ID DA TRANSAÇÃO
-    const pagamentos = readPagamentos();
-    if (!pagamentos.pagamentosJogadores[jogadorId]) {
-        pagamentos.pagamentosJogadores[jogadorId] = {};
-    }
-    pagamentos.pagamentosJogadores[jogadorId][tipo] = novaTransacao.id; // Salva o ID
+    pagamentos.pagamentosJogadores[jogadorId][tipo] = novaTransacao.id;
     writePagamentos(pagamentos);
 
     res.status(200).json({ pagamentos, caixinha: caixinhaData });
 });
 
-// --- NOVAS ROTAS DE CANCELAR E RESETAR ---
-
+// --- Rotas de Cancelar e Resetar ---
 app.post('/api/pagamentos/cancelar', (req, res) => {
     const { jogadorId, tipo } = req.body;
     const pagamentos = readPagamentos();
@@ -135,15 +181,15 @@ app.post('/api/pagamentos/cancelar', (req, res) => {
     
     const transacaoIndex = caixinhaData.transacoes.findIndex(t => t.id === transacaoId);
     if (transacaoIndex === -1) {
-        return res.status(404).json({ message: 'Transação na caixinha não encontrada.' });
+        pagamentos.pagamentosJogadores[jogadorId][tipo] = null;
+        writePagamentos(pagamentos);
+        return res.status(404).json({ message: 'Transação na caixinha não encontrada, mas pagamento foi resetado.' });
     }
     
-    // Remove a transação e reverte o saldo
     const transacaoRemovida = caixinhaData.transacoes.splice(transacaoIndex, 1)[0];
     caixinhaData.saldoTotal -= transacaoRemovida.valor;
     writeCaixinha(caixinhaData);
     
-    // Reseta o pagamento
     pagamentos.pagamentosJogadores[jogadorId][tipo] = null;
     writePagamentos(pagamentos);
     
@@ -168,11 +214,11 @@ app.post('/api/time-do-mes/reset', (req, res) => {
 });
 
 app.post('/api/jogadores/reset', (req, res) => {
-    // 1. Deletar fotos
     fs.readdir(UPLOADS_DIR, (err, files) => {
         if (err) console.error("Erro ao ler diretório de uploads:", err);
         if (files) {
             for (const file of files) {
+                if(file === '.gitkeep') continue; // Não apagar o gitkeep
                 fs.unlink(path.join(UPLOADS_DIR, file), err => {
                     if (err) console.error(`Erro ao deletar ${file}:`, err);
                 });
@@ -180,7 +226,6 @@ app.post('/api/jogadores/reset', (req, res) => {
         }
     });
 
-    // 2. Zerar arquivos de dados dependentes
     writeJogadores([]);
     writePagamentos({ valorChurrascoBase: 0, pagamentosJogadores: {} });
     writeTimeDoMes({ time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] }});
