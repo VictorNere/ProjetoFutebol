@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(value);
     };
 
-    // --- LÓGICA DO MODAL DE CONFIRMAÇÃO (CORRIGIDA) ---
+    // --- LÓGICA DO MODAL DE CONFIRMAÇÃO (GLOBAL) ---
     let confirmCallback = null;
 
     const openConfirmModal = (text, callback) => {
@@ -35,13 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmBackdrop = document.getElementById('confirm-backdrop');
         const confirmText = document.getElementById('confirm-modal-text');
 
-        // VERIFICA SE O MODAL EXISTE NA PÁGINA
         if (!confirmModal || !confirmBackdrop || !confirmText) {
             console.error('Modal de confirmação não encontrado no HTML desta página.');
-            // Fallback para o alert feio se o HTML estiver quebrado
-            if (confirm(text)) {
-                if(callback) callback();
-            }
+            if (confirm(text)) { if(callback) callback(); }
             return;
         }
 
@@ -60,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmCallback = null;
     };
 
-    // Adiciona listeners globais de forma segura
     const btnConfirmNo = document.getElementById('btn-confirm-no');
     const btnConfirmYes = document.getElementById('btn-confirm-yes');
     const globalConfirmBackdrop = document.getElementById('confirm-backdrop');
@@ -80,20 +75,51 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (formAddJogador && listaJogadoresEl) {
         
-        const fileInput = document.getElementById('foto-jogador');
+        // Elementos do Formulário de ADIÇÃO
+        const fileInputAdd = document.getElementById('foto-jogador');
+        
+        // Elementos do Modal de RECORTE
         const cropModal = document.getElementById('cropper-modal');
         const cropBackdrop = document.getElementById('cropper-backdrop');
         const imageToCrop = document.getElementById('img-to-crop');
         const confirmCropBtn = document.getElementById('btn-confirm-crop');
+        
+        // Elementos do Modal de EDIÇÃO (NOVO)
+        const editModal = document.getElementById('edit-modal');
+        const editBackdrop = document.getElementById('edit-backdrop');
+        const formEditJogador = document.getElementById('form-edit-jogador');
+        const editNomeInput = document.getElementById('edit-nome-jogador');
+        const editGoleiroInput = document.getElementById('edit-goleiro-jogador');
+        const fileInputEdit = document.getElementById('edit-foto-jogador');
+        const btnCancelEdit = document.getElementById('btn-cancel-edit');
+        const editJogadorIdInput = document.getElementById('edit-jogador-id');
+        
+        // Elementos de Reset
         const btnResetJogadores = document.getElementById('btn-reset-jogadores');
         
         let cropper;
-        let croppedImageBlob = null;
+        let croppedImageBlob = null; // Armazena a foto recortada (para Adicionar ou Editar)
+        let currentCropperCallback = null; // Para saber o que fazer após o recorte
         const aspectRatio = 200 / 180;
 
-        const openCropModal = () => {
-            cropBackdrop.style.display = 'block';
-            cropModal.style.display = 'block';
+        // --- Lógica de Recorte (Cropper) ---
+        const openCropModal = (file, callback) => {
+            if (!file || !file.type.startsWith('image/')) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                imageToCrop.src = event.target.result;
+                cropBackdrop.style.display = 'block';
+                cropModal.style.display = 'block';
+                
+                currentCropperCallback = callback; // Salva o que fazer após confirmar
+                
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: aspectRatio, viewMode: 1, dragMode: 'move',
+                    background: false, cropBoxResizable: false, cropBoxMovable: false,
+                });
+            };
+            reader.readAsDataURL(file);
         };
 
         const closeCropModal = () => {
@@ -101,45 +127,105 @@ document.addEventListener('DOMContentLoaded', () => {
             cropModal.style.display = 'none';
             if (cropper) cropper.destroy();
             cropper = null;
-            fileInput.value = '';
+            currentCropperCallback = null;
         };
 
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file || !file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                imageToCrop.src = event.target.result;
-                openCropModal();
-                cropper = new Cropper(imageToCrop, {
-                    aspectRatio: aspectRatio, viewMode: 1, dragMode: 'move',
-                    background: false, cropBoxResizable: false, cropBoxMovable: false,
-                });
-            };
-            reader.readAsDataURL(file);
+        // Input de Add chama o Cropper
+        fileInputAdd.addEventListener('change', (e) => {
+            openCropModal(e.target.files[0], (blob) => {
+                croppedImageBlob = blob; // Salva para o formulário de ADIÇÃO
+                fileInputAdd.value = ''; // Limpa o input
+                showToast('Imagem pronta para adicionar!', 'success');
+            });
         });
 
+        // Input de Edit chama o Cropper (NOVO)
+        fileInputEdit.addEventListener('change', (e) => {
+            openCropModal(e.target.files[0], (blob) => {
+                croppedImageBlob = blob; // Salva para o formulário de EDIÇÃO
+                fileInputEdit.value = ''; // Limpa o input
+                showToast('Nova imagem pronta para salvar!', 'success');
+            });
+        });
+
+        // Botão de Confirmar Recorte (agora genérico)
         confirmCropBtn.addEventListener('click', () => {
             if (!cropper) return;
             const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 / aspectRatio });
             canvas.toBlob((blob) => {
-                croppedImageBlob = blob;
+                if (currentCropperCallback) {
+                    currentCropperCallback(blob); // Executa a ação (salvar o blob)
+                }
                 closeCropModal();
-                showToast('Imagem recortada!', 'success');
             }, 'image/jpeg', 0.9);
         });
         
         if (cropBackdrop) cropBackdrop.addEventListener('click', closeCropModal);
 
+        // --- Lógica do Modal de Edição (NOVO) ---
+        const openEditModal = (jogador) => {
+            editJogadorIdInput.value = jogador.id;
+            editNomeInput.value = jogador.nome;
+            editGoleiroInput.checked = jogador.isGoleiro;
+            croppedImageBlob = null; // Limpa qualquer foto recortada anterior
+            fileInputEdit.value = ''; // Limpa o input de arquivo
+            
+            editBackdrop.style.display = 'block';
+            editModal.style.display = 'block';
+        };
+        
+        const closeEditModal = () => {
+            editBackdrop.style.display = 'none';
+            editModal.style.display = 'none';
+            croppedImageBlob = null;
+        };
+        
+        btnCancelEdit.addEventListener('click', closeEditModal);
+        editBackdrop.addEventListener('click', closeEditModal);
+
+        formEditJogador.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = editJogadorIdInput.value;
+            
+            const formData = new FormData();
+            formData.append('nome', editNomeInput.value);
+            formData.append('isGoleiro', editGoleiroInput.checked);
+            
+            // Anexa a foto NOVA somente se ela foi recortada
+            if (croppedImageBlob) {
+                formData.append('foto', croppedImageBlob, 'jogador.jpg');
+            }
+
+            try {
+                const response = await fetch(`/api/jogadores/${id}`, {
+                    method: 'PUT',
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error('Falha ao atualizar jogador');
+                
+                await response.json(); // Espera a resposta
+                closeEditModal();
+                showToast('Jogador atualizado com sucesso!', 'success');
+                carregarJogadores(); // Recarrega a lista inteira
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Falha ao atualizar jogador.', 'error');
+            }
+        });
+
+        // --- Lógica de Carregar e Criar Cards ---
         const criarCardJogador = (jogador) => {
             const card = document.createElement('div');
             card.classList.add('player-card');
             if (jogador.isGoleiro) card.classList.add('goleiro');
             card.dataset.id = jogador.id;
-            const fotoUrl = jogador.foto ? jogador.foto : 'https://via.placeholder.com/200x180.png?text=Sem+Foto';
+            const fotoUrl = jogador.foto ? `${jogador.foto}?t=${new Date().getTime()}` : 'https://via.placeholder.com/200x180.png?text=Sem+Foto'; // Adiciona cache buster
 
             card.innerHTML = `
                 <button class="btn-remover-jogador">X</button>
+                <button class="btn-editar-jogador">✏️</button>
                 <div class="card-image-wrapper">
                     <img src="${fotoUrl}" alt="${jogador.nome}">
                     <span class="player-name">${jogador.nome}</span>
@@ -162,6 +248,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             });
+            
+            // NOVO: Listener do botão de editar
+            card.querySelector('.btn-editar-jogador').addEventListener('click', () => {
+                openEditModal(jogador);
+            });
+            
             listaJogadoresEl.appendChild(card);
         };
 
@@ -208,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch('/api/jogadores/reset', { method: 'POST' });
                     if (!response.ok) throw new Error('Falha ao resetar jogadores');
-                    carregarJogadores(); // Recarrega a lista (vazia)
+                    carregarJogadores();
                     showToast('Todos os jogadores e dados foram removidos.', 'success');
                 } catch (error) {
                     showToast('Erro ao resetar jogadores.', 'error');

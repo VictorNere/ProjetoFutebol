@@ -81,6 +81,44 @@ app.post('/api/jogadores', upload.single('foto'), (req, res) => {
     res.status(201).json(novoJogador);
 });
 
+// --- ROTA DE EDIÇÃO (PUT) ATUALIZADA ---
+app.put('/api/jogadores/:id', upload.single('foto'), (req, res) => {
+    let jogadores = readJogadores();
+    const jogadorId = Number(req.params.id);
+    const jogadorIndex = jogadores.findIndex(j => j.id === jogadorId);
+
+    if (jogadorIndex === -1) {
+        return res.status(404).json({ message: 'Jogador não encontrado' });
+    }
+
+    const jogador = jogadores[jogadorIndex];
+
+    // Se uma nova foto foi enviada
+    if (req.file) {
+        // 1. Deletar a foto antiga, se ela existir
+        if (jogador.foto) {
+            const oldFotoPath = path.join(__dirname, jogador.foto);
+            if (fs.existsSync(oldFotoPath)) {
+                fs.unlink(oldFotoPath, (err) => {
+                    if (err) console.error("Erro ao deletar foto antiga:", err);
+                });
+            }
+        }
+        // 2. Atualizar com o caminho da nova foto
+        jogador.foto = `/uploads/${req.file.filename}`;
+    }
+
+    // 3. Atualizar nome e status de goleiro
+    jogador.nome = req.body.nome || jogador.nome;
+    jogador.isGoleiro = req.body.isGoleiro === 'true';
+
+    // 4. Salvar o array de jogadores atualizado
+    jogadores[jogadorIndex] = jogador;
+    writeJogadores(jogadores);
+
+    res.status(200).json(jogador); // Retorna o jogador atualizado
+});
+
 app.delete('/api/jogadores/:id', (req, res) => {
     let jogadores = readJogadores();
     const jogadorId = Number(req.params.id);
@@ -218,7 +256,7 @@ app.post('/api/jogadores/reset', (req, res) => {
         if (err) console.error("Erro ao ler diretório de uploads:", err);
         if (files) {
             for (const file of files) {
-                if(file === '.gitkeep') continue; // Não apagar o gitkeep
+                if(file === '.gitkeep') continue;
                 fs.unlink(path.join(UPLOADS_DIR, file), err => {
                     if (err) console.error(`Erro ao deletar ${file}:`, err);
                 });

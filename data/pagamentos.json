@@ -1,4 +1,17 @@
 {
-  "valorChurrascoBase": 0,
-  "pagamentosJogadores": {}
+  "valorChurrascoBase": 60,
+  "pagamentosJogadores": {
+    "1762359614463": {
+      "mensalidade": 1762361540219
+    },
+    "1762359721254": {
+      "mensalidade": 1762361540908
+    },
+    "1762360900461": {
+      "mensalidade": 1762361543318
+    },
+    "1762360911821": {
+      "mensalidade": 1762361543992
+    }
+  }
 }

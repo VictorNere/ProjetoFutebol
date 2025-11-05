@@ -10,5 +10,23 @@
     "nome": "Kareon",
     "isGoleiro": false,
     "foto": "/uploads/1762359721251.jpg"
+  },
+  {
+    "id": 1762360900461,
+    "nome": "Leandro",
+    "isGoleiro": false,
+    "foto": "/uploads/1762360900457.jpg"
+  },
+  {
+    "id": 1762360911821,
+    "nome": "Carlos",
+    "isGoleiro": false,
+    "foto": "/uploads/1762360911818.jpg"
+  },
+  {
+    "id": 1762360926001,
+    "nome": "Natã",
+    "isGoleiro": false,
+    "foto": "/uploads/1762360925997.jpg"
   }
 ]
