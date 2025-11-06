@@ -22,8 +22,12 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--primary-bg);
     color: var(--text-color);
-    display: flex;
-    flex-direction: column;
+    transition: padding-top 0.4s cubic-bezier(0.2, 0, 0, 1);
+    padding-top: 70px; /* Altura base do header no desktop */
+}
+
+body.header-hidden {
+    padding-top: 0;
 }
 
 .site-header {
@@ -31,7 +35,62 @@ body {
     padding: 1rem 0;
     background-color: var(--secondary-bg);
     border-bottom: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
+    transform: translateY(0);
 }
+
+body.header-hidden .site-header {
+    transform: translateY(-100%);
+}
+
+/* --- ESTILO DA SETINHA/TOGGLE CORRIGIDO --- */
+.mobile-nav-toggle {
+    display: none; /* Escondido no desktop por padrão */
+    position: fixed;
+    top: 15px; /* Canto superior */
+    right: 15px; /* Canto direito */
+    background: rgba(30, 30, 30, 0.7); /* Fundo semi-transparente */
+    border: 1px solid var(--border-color);
+    color: var(--accent-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 1001; /* Acima do header */
+    opacity: 0.7; /* Transparente */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.mobile-nav-toggle:hover {
+    opacity: 1;
+}
+.mobile-nav-toggle .fa-bars {
+    display: block; /* Ícone padrão (menu fechado) */
+}
+.mobile-nav-toggle .fa-xmark {
+    display: none; /* Ícone 'X' (menu aberto) */
+}
+
+/* Quando o header está escondido, mostra a setinha/ícone de 'abrir' (fa-bars) */
+body.header-hidden .mobile-nav-toggle .fa-bars {
+    display: block;
+}
+body.header-hidden .mobile-nav-toggle .fa-xmark {
+    display: none;
+}
+
+/* Quando o header está visível, mostra o 'X' para fechar */
+body:not(.header-hidden) .mobile-nav-toggle .fa-bars {
+    display: none;
+}
+body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
+    display: block;
+}
+
 
 .main-nav ul {
     list-style: none;
@@ -81,19 +140,61 @@ body {
     align-items: center;
     margin: auto;
 }
-
 .content-section h1 {
     margin-bottom: 1rem;
     color: var(--accent-color);
 }
-
 .content-section p {
     font-size: 1.1rem;
     line-height: 1.6;
     color: #aaa;
 }
 
-@media (max-width: 600px) {
+/* Estilos do Footer */
+.site-footer-social {
+    width: 100%;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    margin-top: 2rem;
+    background-color: var(--primary-bg);
+}
+.social-links {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+}
+.social-links a {
+    color: var(--accent-color);
+    text-decoration: none;
+    margin: 0 0.75rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    font-size: 1.8rem;
+}
+.social-links a:hover {
+    color: var(--text-color);
+}
+.site-footer-social p {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+
+/* --- RESPONSIVIDADE MÓVEL (CORRIGIDA) --- */
+@media (max-width: 800px) {
+
+    body {
+        padding-top: 100px; 
+    }
+    body.header-hidden {
+        padding-top: 0;
+    }
+
+    .mobile-nav-toggle {
+        display: block; /* Mostra o botão no celular */
+    }
+
     .main-nav ul {
         flex-direction: column;
         align-items: center;
@@ -104,16 +205,54 @@ body {
         text-align: center;
         display: block;
     }
+    
+    .main-content {
+        padding: 1rem;
+    }
+
+    /* Faz os grids de 2 ou 3 colunas virarem 1 coluna */
+    .caixinha-grid,
+    .pagamentos-grid,
+    .team-builder-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* Reseta as posições */
+    .caixinha-hist-card,
+    .pagamentos-lista-card,
+    .caixinha-form-card,
+    .pagamentos-config-card,
+    .pagamentos-resumo-card {
+        grid-column: auto;
+        grid-row: auto;
+    }
+    
+    /* ADICIONA SCROLL HORIZONTAL PARA TABELAS/LISTAS LARGAS */
+    .caixinha-hist-card,
+    .pagamentos-lista-card {
+        max-height: 50vh;
+        overflow-x: auto; /* CORRIGE A TELA CORTADA */
+    }
+
+    .team-builder-container {
+        height: auto;
+    }
+    .player-pool {
+        height: 40vh;
+    }
+    .player-grid {
+        justify-content: center;
+    }
 }
 
-/* --- Estilos de Formulário (Página Jogadores) --- */
+
+/* --- O RESTO DO SEU CSS --- */
 .form-section {
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 2rem;
     max-width: 100%;
     margin-bottom: 2rem;
 }
-
 .player-form {
     display: flex;
     flex-direction: column;
@@ -122,7 +261,6 @@ body {
     width: 100%;
     max-width: 900px;
 }
-
 .form-row {
     display: flex;
     flex-wrap: wrap;
@@ -130,24 +268,20 @@ body {
     gap: 1.5rem;
     align-items: flex-end;
 }
-
 #form-row-bottom {
     border-top: 2px solid var(--border-color);
     padding-top: 1.5rem;
 }
-
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-
 .form-group label {
     font-size: 0.9rem;
     color: #aaa;
     text-align: left;
 }
-
 .form-group input[type="text"],
 .form-group input[type="url"],
 .form-group input[type="file"],
@@ -162,12 +296,10 @@ body {
     width: 250px;
     font-family: inherit;
 }
-
 .form-group input[type="file"] {
     color: #aaa;
     padding: 0.6rem 0.75rem;
 }
-
 .form-group-check {
     display: flex;
     flex-direction: row;
@@ -178,14 +310,12 @@ body {
     padding: 0;
     margin-bottom: 0.35rem;
 }
-
 .form-group-check label { padding: 0; }
 .form-group-check input[type="checkbox"] {
     width: 20px;
     height: 20px;
     accent-color: var(--accent-color);
 }
-
 .btn-submit {
     background-color: var(--accent-color);
     color: var(--primary-bg);
@@ -203,7 +333,6 @@ body {
     box-shadow: 0 4px 10px rgba(0, 230, 118, 0.3);
 }
 
-/* --- Estilos dos Cards (Página Jogadores) --- */
 .player-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -212,7 +341,6 @@ body {
     padding: 1rem;
     justify-content: center;
 }
-
 .player-card {
     background-color: #1a2a3a;
     border-radius: 12px;
@@ -231,7 +359,6 @@ body {
     border: 2px solid var(--accent-color);
     box-shadow: 0 4px 20px rgba(0, 230, 118, 0.4);
 }
-
 .btn-remover-jogador {
     position: absolute;
     top: 8px;
@@ -256,6 +383,30 @@ body {
     background-color: var(--danger-hover);
     transform: scale(1.1);
 }
+.btn-editar-jogador {
+    position: absolute;
+    top: 8px;
+    right: 40px;
+    background-color: #0288d1;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    font-size: 0.8rem;
+    line-height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.btn-editar-jogador:hover {
+    background-color: #01579b;
+    transform: scale(1.1);
+}
 
 .card-image-wrapper {
     width: 100%;
@@ -268,7 +419,6 @@ body {
     height: 100%;
     object-fit: cover;
 }
-
 .card-info {
     flex-grow: 1;
     padding: 0.5rem;
@@ -277,7 +427,6 @@ body {
     flex-direction: column;
     justify-content: space-between;
 }
-
 .player-name {
     font-size: 1.1rem;
     font-weight: bold;
@@ -291,7 +440,6 @@ body {
     background: rgba(0, 0, 0, 0.5);
     padding: 0.25rem 0;
 }
-
 .player-details {
     display: flex;
     justify-content: center;
@@ -305,7 +453,6 @@ body {
     transform: scale(1);
 }
 
-/* --- Estilos do Modal de Recorte --- */
 .cropper-backdrop {
     position: fixed;
     top: 0;
@@ -345,8 +492,38 @@ body {
     max-width: 100%;
     max-height: 400px;
 }
+.edit-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 150;
+    display: none;
+}
+.edit-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    z-index: 151;
+    display: none;
+    width: 90vw;
+    max-width: 400px;
+    text-align: center;
+}
+.edit-modal h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+}
+.edit-modal .player-form { gap: 1rem; }
+.edit-modal .form-group input { width: 100%; }
 
-/* --- Estilos do Modal de Confirmação --- */
 .confirm-backdrop {
     position: fixed;
     top: 0;
@@ -408,12 +585,12 @@ body {
 }
 .btn-danger:hover { background-color: var(--danger-hover); }
 
-/* --- Estilos das Notificações Toast --- */
+/* --- Z-INDEX CORRIGIDO --- */
 .toast-container {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 300;
+    z-index: 3000; /* Mais alto que tudo */
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -438,7 +615,6 @@ body {
     to { transform: translateX(100%); opacity: 0; }
 }
 
-/* --- Estilos do Time do Mês --- */
 .team-builder-header {
     display: flex;
     justify-content: space-between;
@@ -458,7 +634,7 @@ body {
     grid-template-columns: 1fr 1.5fr 1.5fr;
     gap: 1.5rem;
     width: 100%;
-    min-height: 70vh; /* min-height para ser flexível */
+    min-height: 70vh;
 }
 .player-pool-column, .team-column {
     background-color: var(--secondary-bg);
@@ -497,13 +673,13 @@ body {
 .player-pool {
     flex-grow: 1;
     overflow-y: auto;
-    height: 60vh; /* Altura definida para o scroll */
+    height: 60vh;
 }
 .linha-slot { min-height: 120px; }
 .reserva-slot { min-height: 100px; }
 .goleiro-slot { min-height: 50px; }
 .drop-zone.drag-over {
-    background-color: #2a2a2a;
+    background-color: #2a2a3a;
     border-color: var(--accent-color);
 }
 .player-pill {
@@ -527,7 +703,6 @@ body {
     border-color: var(--accent-color);
 }
 
-/* --- Estilos da Caixinha --- */
 .caixinha-grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -631,7 +806,6 @@ body {
 .hist-transacoes-lista li.saida { border-left-color: var(--danger-color); }
 .hist-transacoes-lista li.saida .valor { color: var(--danger-color); }
 
-/* --- Estilos de Pagamentos --- */
 .pagamentos-grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -754,7 +928,6 @@ body {
     cursor: not-allowed;
 }
 
-/* Botões de Perigo (Reset) */
 .danger-zone-divider {
     border: none;
     height: 1px;
@@ -786,70 +959,3 @@ body {
     transition: all 0.3s ease;
 }
 .btn-danger-full:hover { background-color: var(--danger-hover); }
-
-/* --- NOVOS ESTILOS DO MODAL DE EDIÇÃO E BOTÃO --- */
-
-.btn-editar-jogador {
-    position: absolute;
-    top: 8px;
-    right: 40px; /* Ao lado do botão de remover */
-    background-color: #0288d1; /* Azul */
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 10;
-    font-size: 0.8rem;
-    line-height: 25px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.btn-editar-jogador:hover {
-    background-color: #01579b;
-    transform: scale(1.1);
-}
-
-.edit-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85);
-    z-index: 150; /* Entre o cropper e o confirm */
-    display: none;
-}
-
-.edit-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    z-index: 151;
-    display: none;
-    width: 90vw;
-    max-width: 400px;
-    text-align: center;
-}
-
-.edit-modal h2 {
-    color: var(--accent-color);
-    margin-bottom: 1.5rem;
-}
-
-.edit-modal .player-form {
-    gap: 1rem;
-}
-.edit-modal .form-group input {
-    width: 100%;
-}

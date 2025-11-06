@@ -1,4 +1,60 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- LÓGICA DO HEADER (CORRIGIDA) ---
+    const header = document.querySelector('.site-header');
+    const mobileToggle = document.querySelector('.mobile-nav-toggle');
+    let hideHeaderTimer;
+    
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    const showHeader = () => {
+        document.body.classList.remove('header-hidden');
+    };
+    const hideHeader = () => {
+        document.body.classList.add('header-hidden');
+    };
+    
+    if (isMobile) {
+        // Lógica de Celular (Clique na Setinha)
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                document.body.classList.toggle('header-hidden');
+            });
+        }
+        // No celular, o header começa visível
+        showHeader();
+
+    } else {
+        // Lógica de Desktop (Mouse) - CORRIGIDA
+        const topZone = 80; // Altura da "zona quente" no topo
+        
+        // Inicia visível, mas programa para esconder
+        showHeader();
+        hideHeaderTimer = setTimeout(hideHeader, 5000); 
+        
+        // Mostra se o mouse entrar na zona superior
+        document.addEventListener('mousemove', (e) => {
+            if (e.clientY < topZone) {
+                showHeader();
+                clearTimeout(hideHeaderTimer); // Cancela qualquer timer de esconder
+            }
+        });
+
+        // Mantém aberto se o mouse estiver sobre o header
+        if (header) {
+            header.addEventListener('mouseenter', () => {
+                showHeader(); // Garante que está visível
+                clearTimeout(hideHeaderTimer); // Cancela o timer de esconder
+            });
+
+            // Agenda para esconder 5s após o mouse SAIR do header
+            header.addEventListener('mouseleave', () => {
+                clearTimeout(hideHeaderTimer);
+                hideHeaderTimer = setTimeout(hideHeader, 5000); // 5 segundos
+            });
+        }
+    }
+    
     // --- LÓGICA GLOBAL (Toast, Navegação) ---
     const navLinks = document.querySelectorAll('.main-nav .nav-link');
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -29,62 +85,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DO MODAL DE CONFIRMAÇÃO (GLOBAL) ---
     let confirmCallback = null;
-
     const openConfirmModal = (text, callback) => {
         const confirmModal = document.getElementById('confirm-modal');
         const confirmBackdrop = document.getElementById('confirm-backdrop');
         const confirmText = document.getElementById('confirm-modal-text');
-
         if (!confirmModal || !confirmBackdrop || !confirmText) {
             console.error('Modal de confirmação não encontrado no HTML desta página.');
             if (confirm(text)) { if(callback) callback(); }
             return;
         }
-
         confirmText.textContent = text;
         confirmCallback = callback;
         confirmBackdrop.style.display = 'block';
         confirmModal.style.display = 'block';
     };
-
     const closeConfirmModal = () => {
         const confirmModal = document.getElementById('confirm-modal');
         const confirmBackdrop = document.getElementById('confirm-backdrop');
-        
         if (confirmModal) confirmModal.style.display = 'none';
         if (confirmBackdrop) confirmBackdrop.style.display = 'none';
         confirmCallback = null;
     };
-
     const btnConfirmNo = document.getElementById('btn-confirm-no');
     const btnConfirmYes = document.getElementById('btn-confirm-yes');
     const globalConfirmBackdrop = document.getElementById('confirm-backdrop');
-
     if (btnConfirmNo) btnConfirmNo.addEventListener('click', closeConfirmModal);
     if (globalConfirmBackdrop) globalConfirmBackdrop.addEventListener('click', closeConfirmModal);
     if (btnConfirmYes) btnConfirmYes.addEventListener('click', () => {
-        if (confirmCallback) {
-            confirmCallback();
-        }
+        if (confirmCallback) confirmCallback();
         closeConfirmModal();
     });
 
     // --- LÓGICA DA PÁGINA DE JOGADORES ---
+    // (O código desta seção é o mesmo da resposta anterior, está completo)
     const formAddJogador = document.getElementById('form-add-jogador');
     const listaJogadoresEl = document.getElementById('lista-jogadores');
-    
     if (formAddJogador && listaJogadoresEl) {
-        
-        // Elementos do Formulário de ADIÇÃO
         const fileInputAdd = document.getElementById('foto-jogador');
-        
-        // Elementos do Modal de RECORTE
         const cropModal = document.getElementById('cropper-modal');
         const cropBackdrop = document.getElementById('cropper-backdrop');
         const imageToCrop = document.getElementById('img-to-crop');
         const confirmCropBtn = document.getElementById('btn-confirm-crop');
-        
-        // Elementos do Modal de EDIÇÃO (NOVO)
         const editModal = document.getElementById('edit-modal');
         const editBackdrop = document.getElementById('edit-backdrop');
         const formEditJogador = document.getElementById('form-edit-jogador');
@@ -93,27 +134,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileInputEdit = document.getElementById('edit-foto-jogador');
         const btnCancelEdit = document.getElementById('btn-cancel-edit');
         const editJogadorIdInput = document.getElementById('edit-jogador-id');
-        
-        // Elementos de Reset
         const btnResetJogadores = document.getElementById('btn-reset-jogadores');
-        
         let cropper;
-        let croppedImageBlob = null; // Armazena a foto recortada (para Adicionar ou Editar)
-        let currentCropperCallback = null; // Para saber o que fazer após o recorte
+        let croppedImageBlob = null; 
+        let currentCropperCallback = null;
         const aspectRatio = 200 / 180;
-
-        // --- Lógica de Recorte (Cropper) ---
         const openCropModal = (file, callback) => {
             if (!file || !file.type.startsWith('image/')) return;
-            
             const reader = new FileReader();
             reader.onload = (event) => {
                 imageToCrop.src = event.target.result;
                 cropBackdrop.style.display = 'block';
                 cropModal.style.display = 'block';
-                
-                currentCropperCallback = callback; // Salva o que fazer após confirmar
-                
+                currentCropperCallback = callback; 
                 cropper = new Cropper(imageToCrop, {
                     aspectRatio: aspectRatio, viewMode: 1, dragMode: 'move',
                     background: false, cropBoxResizable: false, cropBoxMovable: false,
@@ -121,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             reader.readAsDataURL(file);
         };
-
         const closeCropModal = () => {
             cropBackdrop.style.display = 'none';
             cropModal.style.display = 'none';
@@ -129,100 +161,74 @@ document.addEventListener('DOMContentLoaded', () => {
             cropper = null;
             currentCropperCallback = null;
         };
-
-        // Input de Add chama o Cropper
         fileInputAdd.addEventListener('change', (e) => {
             openCropModal(e.target.files[0], (blob) => {
-                croppedImageBlob = blob; // Salva para o formulário de ADIÇÃO
-                fileInputAdd.value = ''; // Limpa o input
+                croppedImageBlob = blob;
+                fileInputAdd.value = '';
                 showToast('Imagem pronta para adicionar!', 'success');
             });
         });
-
-        // Input de Edit chama o Cropper (NOVO)
         fileInputEdit.addEventListener('change', (e) => {
             openCropModal(e.target.files[0], (blob) => {
-                croppedImageBlob = blob; // Salva para o formulário de EDIÇÃO
-                fileInputEdit.value = ''; // Limpa o input
+                croppedImageBlob = blob;
+                fileInputEdit.value = '';
                 showToast('Nova imagem pronta para salvar!', 'success');
             });
         });
-
-        // Botão de Confirmar Recorte (agora genérico)
         confirmCropBtn.addEventListener('click', () => {
             if (!cropper) return;
             const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 / aspectRatio });
             canvas.toBlob((blob) => {
                 if (currentCropperCallback) {
-                    currentCropperCallback(blob); // Executa a ação (salvar o blob)
+                    currentCropperCallback(blob);
                 }
                 closeCropModal();
             }, 'image/jpeg', 0.9);
         });
-        
         if (cropBackdrop) cropBackdrop.addEventListener('click', closeCropModal);
-
-        // --- Lógica do Modal de Edição (NOVO) ---
         const openEditModal = (jogador) => {
             editJogadorIdInput.value = jogador.id;
             editNomeInput.value = jogador.nome;
             editGoleiroInput.checked = jogador.isGoleiro;
-            croppedImageBlob = null; // Limpa qualquer foto recortada anterior
-            fileInputEdit.value = ''; // Limpa o input de arquivo
-            
+            croppedImageBlob = null;
+            fileInputEdit.value = '';
             editBackdrop.style.display = 'block';
             editModal.style.display = 'block';
         };
-        
         const closeEditModal = () => {
             editBackdrop.style.display = 'none';
             editModal.style.display = 'none';
             croppedImageBlob = null;
         };
-        
         btnCancelEdit.addEventListener('click', closeEditModal);
         editBackdrop.addEventListener('click', closeEditModal);
-
         formEditJogador.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = editJogadorIdInput.value;
-            
             const formData = new FormData();
             formData.append('nome', editNomeInput.value);
             formData.append('isGoleiro', editGoleiroInput.checked);
-            
-            // Anexa a foto NOVA somente se ela foi recortada
             if (croppedImageBlob) {
                 formData.append('foto', croppedImageBlob, 'jogador.jpg');
             }
-
             try {
-                const response = await fetch(`/api/jogadores/${id}`, {
-                    method: 'PUT',
-                    body: formData,
-                });
-
+                const response = await fetch(`/api/jogadores/${id}`, { method: 'PUT', body: formData });
                 if (!response.ok) throw new Error('Falha ao atualizar jogador');
-                
-                await response.json(); // Espera a resposta
+                await response.json();
                 closeEditModal();
                 showToast('Jogador atualizado com sucesso!', 'success');
-                carregarJogadores(); // Recarrega a lista inteira
-                
+                carregarJogadores();
             } catch (error) {
                 console.error('Erro:', error);
                 showToast('Falha ao atualizar jogador.', 'error');
             }
         });
-
-        // --- Lógica de Carregar e Criar Cards ---
         const criarCardJogador = (jogador) => {
             const card = document.createElement('div');
             card.classList.add('player-card');
             if (jogador.isGoleiro) card.classList.add('goleiro');
             card.dataset.id = jogador.id;
-            const fotoUrl = jogador.foto ? `${jogador.foto}?t=${new Date().getTime()}` : 'https://via.placeholder.com/200x180.png?text=Sem+Foto'; // Adiciona cache buster
-
+            const fotoUrl = jogador.foto ? `${jogador.foto}?t=${new Date().getTime()}` : 'https://via.placeholder.com/200x180.png?text=Sem+Foto';
             card.innerHTML = `
                 <button class="btn-remover-jogador">X</button>
                 <button class="btn-editar-jogador">✏️</button>
@@ -235,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="player-gk-icon">${jogador.isGoleiro ? '🧤' : ''}</span>
                     </div>
                 </div>`;
-            
             card.querySelector('.btn-remover-jogador').addEventListener('click', () => {
                 openConfirmModal(`Tem certeza que deseja remover o jogador "${jogador.nome}"?`, async () => {
                     try {
@@ -248,15 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             });
-            
-            // NOVO: Listener do botão de editar
             card.querySelector('.btn-editar-jogador').addEventListener('click', () => {
                 openEditModal(jogador);
             });
-            
             listaJogadoresEl.appendChild(card);
         };
-
         const carregarJogadores = async () => {
             try {
                 const response = await fetch('/api/jogadores');
@@ -269,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Falha ao carregar jogadores.', 'error');
             }
         };
-
         formAddJogador.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!croppedImageBlob) {
@@ -280,7 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('nome', document.getElementById('nome-jogador').value);
             formData.append('isGoleiro', document.getElementById('goleiro-jogador').checked);
             formData.append('foto', croppedImageBlob, 'jogador.jpg');
-
             try {
                 const response = await fetch('/api/jogadores', { method: 'POST', body: formData });
                 if (!response.ok) throw new Error('Falha ao adicionar jogador');
@@ -294,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Falha ao adicionar jogador.', 'error');
             }
         });
-        
         btnResetJogadores.addEventListener('click', () => {
             openConfirmModal("TEM CERTEZA? Isso vai apagar TODOS os jogadores, fotos, pagamentos e times. Esta ação não pode ser desfeita.", async () => {
                 try {
@@ -307,26 +305,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-        
         carregarJogadores();
     }
 
     // --- LÓGICA DO TIME DO MÊS ---
     const teamBuilderContainer = document.getElementById('team-builder-container');
     if (teamBuilderContainer) {
-        
+        // ... (todo o código do time do mês) ...
         let todosJogadores = [];
         let timeDoMes = {};
         let draggedPlayer = null;
-
         const poolDisponiveis = document.getElementById('pool-disponiveis');
         const allDropZones = document.querySelectorAll('.drop-zone');
         const btnSalvarTimes = document.getElementById('btn-salvar-times');
         const btnLimparTimes = document.getElementById('btn-limpar-times');
         const btnGerarTimes = document.getElementById('btn-gerar-times');
-
         const getJogadorById = (id) => todosJogadores.find(j => j.id == id);
-
         const createPlayerPill = (jogador) => {
             const pill = document.createElement('div');
             pill.classList.add('player-pill');
@@ -348,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return pill;
         };
-
         const renderTimes = () => {
             allDropZones.forEach(zone => zone.innerHTML = '');
             let assignedPlayerIds = [];
@@ -361,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const jogador = getJogadorById(id);
                     if (jogador) {
                         slot.appendChild(createPlayerPill(jogador));
-                        assignedPlayerIds.push(jogador.id); // Certifica que é o ID
+                        assignedPlayerIds.push(jogador.id);
                     }
                 });
             };
@@ -371,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
             populateSlot('time2-goleiro', timeDoMes.time2.goleiro);
             populateSlot('time2-linha', timeDoMes.time2.linha);
             populateSlot('time2-reservas', timeDoMes.time2.reservas);
-            
             poolDisponiveis.innerHTML = '';
             todosJogadores.forEach(jogador => {
                 if (!assignedPlayerIds.includes(jogador.id)) {
@@ -379,7 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         };
-        
         allDropZones.forEach(zone => {
             zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
@@ -390,14 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isGoleiro = draggedPlayer.dataset.isGoleiro === 'true';
                 const max = parseInt(zone.dataset.max) || 99;
                 const pos = zone.dataset.pos;
-                
                 if (pos === 'goleiro' && !isGoleiro) { showToast('Apenas Goleiros podem ser movidos para este slot.', 'error'); return; }
                 if (pos === 'linha' && isGoleiro) { showToast('Goleiros não podem jogar na linha.', 'error'); return; }
                 if (zone.children.length >= max) { showToast('Este slot está cheio!', 'error'); return; }
                 zone.appendChild(draggedPlayer);
             });
         });
-        
         btnSalvarTimes.addEventListener('click', async () => {
             const getIdsFromSlot = (slot) => Array.from(slot.children).map(pill => Number(pill.dataset.id));
             const dataToSave = {
@@ -425,37 +414,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Erro ao salvar a escalação.', 'error');
             }
         });
-
         btnLimparTimes.addEventListener('click', () => {
             openConfirmModal("Limpar todas as escalações e mover todos os jogadores para 'Disponíveis'?", async () => {
                 try {
                     const response = await fetch('/api/time-do-mes/reset', { method: 'POST' });
                     if (!response.ok) throw new Error('Falha ao limpar times');
-                    init(); // Recarrega a página
+                    init();
                     showToast('Times limpos!', 'success');
                 } catch (error) {
                     showToast('Erro ao limpar times.', 'error');
                 }
             });
         });
-
         const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
         btnGerarTimes.addEventListener('click', () => {
             let goleirosDisponiveis = shuffleArray([...todosJogadores.filter(j => j.isGoleiro)]);
             let jogadoresDisponiveis = shuffleArray([...todosJogadores.filter(j => !j.isGoleiro)]);
-            
             const slots = [
-                { id: 'time1-goleiro', max: 1, pos: 'goleiro' },
-                { id: 'time2-goleiro', max: 1, pos: 'goleiro' },
-                { id: 'time1-linha', max: 5, pos: 'linha' },
-                { id: 'time2-linha', max: 5, pos: 'linha' },
-                { id: 'time1-reservas', max: 4, pos: 'reserva' },
-                { id: 'time2-reservas', max: 4, pos: 'reserva' }
+                { id: 'time1-goleiro', max: 1, pos: 'goleiro' }, { id: 'time2-goleiro', max: 1, pos: 'goleiro' },
+                { id: 'time1-linha', max: 5, pos: 'linha' }, { id: 'time2-linha', max: 5, pos: 'linha' },
+                { id: 'time1-reservas', max: 4, pos: 'reserva' }, { id: 'time2-reservas', max: 4, pos: 'reserva' }
             ];
-
             allDropZones.forEach(zone => zone.innerHTML = '');
             let poolTemp = [...todosJogadores];
-
             slots.forEach(slot => {
                 const zone = document.getElementById(slot.id);
                 const source = (slot.pos === 'goleiro') ? goleirosDisponiveis : jogadoresDisponiveis;
@@ -467,18 +448,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
-            
             poolDisponiveis.innerHTML = '';
             poolTemp.forEach(jogador => poolDisponiveis.appendChild(createPlayerPill(jogador)));
             showToast('Times gerados aleatoriamente!', 'success');
         });
-
         const init = async () => {
             try {
-                const [jogadoresRes, timeRes] = await Promise.all([
-                    fetch('/api/jogadores'),
-                    fetch('/api/time-do-mes')
-                ]);
+                const [jogadoresRes, timeRes] = await Promise.all([ fetch('/api/jogadores'), fetch('/api/time-do-mes') ]);
                 if (!jogadoresRes.ok || !timeRes.ok) throw new Error('Falha ao carregar dados iniciais');
                 todosJogadores = await jogadoresRes.json();
                 timeDoMes = await timeRes.json();
@@ -494,18 +470,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DA CAIXINHA ---
     const formCaixinha = document.getElementById('form-caixinha');
     if (formCaixinha) {
-        
+        // ... (todo o código da caixinha) ...
         const saldoDisplay = document.getElementById('saldo-total-display');
         const histLista = document.getElementById('hist-transacoes-lista');
         const jogadorSelect = document.getElementById('transacao-jogador');
         const jogadorSelectGroup = document.getElementById('jogador-select-group');
         const tipoSelect = document.getElementById('transacao-tipo');
         const btnResetCaixinha = document.getElementById('btn-reset-caixinha');
-
         const updateUI = (data) => {
             if(saldoDisplay) saldoDisplay.textContent = formatCurrency(data.saldoTotal);
             if(histLista) histLista.innerHTML = '';
-            
             data.transacoes.forEach(t => {
                 const li = document.createElement('li');
                 li.classList.add(t.tipo);
@@ -521,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(histLista) histLista.appendChild(li);
             });
         };
-
         const carregarJogadoresDropdown = async () => {
             try {
                 const response = await fetch('/api/jogadores');
@@ -538,7 +511,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Não foi possível carregar a lista de jogadores.', 'error');
             }
         };
-
         const carregarCaixinha = async () => {
             try {
                 const response = await fetch('/api/caixinha');
@@ -550,7 +522,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Erro ao carregar dados da caixinha.', 'error');
             }
         };
-
         if(tipoSelect) tipoSelect.addEventListener('change', () => {
             if (tipoSelect.value === 'saida') {
                 jogadorSelectGroup.style.display = 'none';
@@ -559,7 +530,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 jogadorSelectGroup.style.display = 'block';
             }
         });
-
         formCaixinha.addEventListener('submit', async (e) => {
             e.preventDefault();
             const descricao = document.getElementById('transacao-descricao').value;
@@ -567,13 +537,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const tipo = document.getElementById('transacao-tipo').value;
             const jogadorId = document.getElementById('transacao-jogador').value;
             const jogadorNome = jogadorSelect.options[jogadorSelect.selectedIndex].text;
-            
             const novaTransacao = {
                 descricao, valor, tipo,
                 jogadorId: tipo === 'entrada' ? jogadorId : null,
                 jogadorNome: tipo === 'entrada' && jogadorId ? jogadorNome : null
             };
-
             try {
                 const response = await fetch('/api/caixinha', {
                     method: 'POST',
@@ -591,7 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Erro ao salvar transação.', 'error');
             }
         });
-        
         if(btnResetCaixinha) btnResetCaixinha.addEventListener('click', () => {
             openConfirmModal("TEM CERTEZA? Isso vai apagar todo o histórico de transações e zerar o saldo.", async () => {
                 try {
@@ -604,15 +571,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-
         carregarJogadoresDropdown();
         carregarCaixinha();
     }
     
-    // --- LÓGICA DE PAGAMENTOS (ATUALIZADA) ---
+    // --- LÓGICA DE PAGAMENTOS ---
     const pagamentosGrid = document.querySelector('.pagamentos-grid');
     if (pagamentosGrid) {
-        
+        // ... (todo o código de pagamentos) ...
         const valorChurrascoInput = document.getElementById('valor-churrasco');
         const btnSalvarChurrasco = document.getElementById('btn-salvar-churrasco');
         const resumoJogadores = document.getElementById('resumo-jogadores');
@@ -621,39 +587,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const resumoArrecadado = document.getElementById('resumo-arrecadado');
         const tableBody = document.getElementById('pagamentos-table-body');
         const btnResetPagamentos = document.getElementById('btn-reset-pagamentos');
-        
         const valorMensalidadeBase = 540;
         let todosJogadores = [];
         let pagamentosData = {};
         let valorMensalidadePorJogador = 0;
-
         const renderPagamentos = () => {
             tableBody.innerHTML = '';
             let totalArrecadado = 0;
-            
             todosJogadores.forEach(jogador => {
                 const status = pagamentosData.pagamentosJogadores[jogador.id] || { mensalidade: null, churrasco: null };
-                
-                // Botão Mensalidade
                 let btnMensalidade;
                 if (jogador.isGoleiro) {
                     btnMensalidade = `<button class="btn-pagamento isento" disabled>Isento</button>`;
-                } else if (status.mensalidade) { // Se tem um ID de transação, está pago
+                } else if (status.mensalidade) {
                     btnMensalidade = `<button class="btn-pagamento cancelar" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
                     totalArrecadado += valorMensalidadePorJogador;
                 } else {
                     btnMensalidade = `<button class="btn-pagamento pagar" data-tipo="mensalidade" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${valorMensalidadePorJogador}">Pagar ${formatCurrency(valorMensalidadePorJogador)}</button>`;
                 }
-
-                // Botão Churrasco
                 let btnChurrasco;
-                if (status.churrasco) { // Se tem um ID de transação, está pago
+                if (status.churrasco) {
                     btnChurrasco = `<button class="btn-pagamento cancelar" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
                     totalArrecadado += pagamentosData.valorChurrascoBase;
                 } else {
                     btnChurrasco = `<button class="btn-pagamento pagar" data-tipo="churrasco" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${pagamentosData.valorChurrascoBase}">Pagar ${formatCurrency(pagamentosData.valorChurrascoBase)}</button>`;
                 }
-                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${jogador.nome} ${jogador.isGoleiro ? '🧤' : ''}</td>
@@ -662,10 +620,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tableBody.appendChild(tr);
             });
-            
             resumoArrecadado.textContent = formatCurrency(totalArrecadado);
         };
-
         const updateResumo = () => {
             const jogadoresDeLinha = todosJogadores.filter(j => !j.isGoleiro).length;
             valorMensalidadePorJogador = jogadoresDeLinha > 0 ? valorMensalidadeBase / jogadoresDeLinha : 0;
@@ -674,7 +630,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resumoChurrasco.textContent = formatCurrency(pagamentosData.valorChurrascoBase);
             valorChurrascoInput.value = pagamentosData.valorChurrascoBase.toFixed(2);
         };
-        
         btnSalvarChurrasco.addEventListener('click', async () => {
             const novoValor = parseFloat(valorChurrascoInput.value);
             try {
@@ -692,17 +647,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Erro ao salvar valor.', 'error');
             }
         });
-        
         tableBody.addEventListener('click', async (e) => {
             const btn = e.target;
             const { id, nome, tipo, valor } = btn.dataset;
-            
             if (btn.classList.contains('pagar')) {
                 if (parseFloat(valor) <= 0) {
                     showToast('Defina um valor maior que zero para o pagamento.', 'error'); return;
                 }
                 btn.disabled = true; btn.textContent = 'Pagando...';
-                
                 try {
                     const response = await fetch('/api/pagamentos/pagar', {
                         method: 'POST',
@@ -719,7 +671,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     showToast(error.message, 'error');
                 }
-
             } else if (btn.classList.contains('cancelar')) {
                 openConfirmModal(`Cancelar este pagamento? (Isso removerá ${formatCurrency(valor)} da caixinha)`, async () => {
                     btn.disabled = true; btn.textContent = 'Cancelando...';
@@ -742,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-        
         btnResetPagamentos.addEventListener('click', () => {
             openConfirmModal("Zerar TODOS os status de pagamento? (Isso NÃO afeta a caixinha).", async () => {
                 try {
@@ -756,7 +706,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-
         const init = async () => {
             try {
                 const [jogadoresRes, pagamentosRes] = await Promise.all([
