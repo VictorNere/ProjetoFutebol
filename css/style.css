@@ -22,70 +22,25 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--primary-bg);
     color: var(--text-color);
-    transition: padding-top 0.4s cubic-bezier(0.2, 0, 0, 1);
-    padding-top: 70px;
+    /* Padding fixo no topo para compensar o header */
+    padding-top: 70px; 
 }
 
-body.header-hidden {
-    padding-top: 0;
-}
+/* REMOVIDO: Lógica de body.header-hidden */
 
 .site-header {
     width: 100%;
     padding: 1rem 0;
     background-color: var(--secondary-bg);
     border-bottom: 1px solid var(--border-color);
-    position: fixed;
+    position: fixed; /* Barra sempre fixa no topo */
     top: 0;
     left: 0;
     z-index: 1000;
-    transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1);
-    transform: translateY(0);
+    transform: translateY(0); /* Sempre visível */
 }
 
-body.header-hidden .site-header {
-    transform: translateY(-100%);
-}
-
-.mobile-nav-toggle {
-    display: none; 
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: rgba(30, 30, 30, 0.7);
-    border: 1px solid var(--border-color);
-    color: var(--accent-color);
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    z-index: 1001;
-    opacity: 0.7;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.mobile-nav-toggle:hover {
-    opacity: 1;
-}
-.mobile-nav-toggle .fa-bars {
-    display: block;
-}
-.mobile-nav-toggle .fa-xmark {
-    display: none;
-}
-body.header-hidden .mobile-nav-toggle .fa-bars {
-    display: block;
-}
-body.header-hidden .mobile-nav-toggle .fa-xmark {
-    display: none;
-}
-body:not(.header-hidden) .mobile-nav-toggle .fa-bars {
-    display: none;
-}
-body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
-    display: block;
-}
-
+/* REMOVIDO: .mobile-nav-toggle e toda a sua lógica */
 
 .main-nav ul {
     list-style: none;
@@ -177,17 +132,12 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 
 /* --- RESPONSIVIDADE MÓVEL (CORRIGIDA) --- */
 @media (max-width: 800px) {
-
+    /* Ajusta o padding do body no mobile para o menu maior */
     body {
         padding-top: 100px; 
     }
-    body.header-hidden {
-        padding-top: 0;
-    }
 
-    .mobile-nav-toggle {
-        display: block;
-    }
+    /* REMOVIDO: .mobile-nav-toggle */
 
     .main-nav ul {
         flex-direction: column;
@@ -204,12 +154,14 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
         padding: 1rem;
     }
 
+    /* Empilha os grids de 2 ou 3 colunas */
     .caixinha-grid,
     .pagamentos-grid,
     .team-builder-container {
         grid-template-columns: 1fr;
     }
 
+    /* Reseta as posições */
     .caixinha-hist-card,
     .pagamentos-lista-card,
     .caixinha-form-card,
@@ -219,7 +171,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
         grid-row: auto;
     }
     
-    /* CORRIGE TELA CORTADA */
+    /* CORRIGE TELA CORTADA: Adiciona scroll horizontal */
     .caixinha-hist-card,
     .pagamentos-lista-card {
         max-height: 50vh;
@@ -582,7 +534,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 3000; /* Mais alto que tudo */
+    z-index: 3000;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -971,8 +923,6 @@ body.is-admin .login-btn {
 body.is-admin .logout-btn {
     display: block !important;
 }
-
-/* REMOVIDO: .auth-buttons */
 
 .login-float-btn, .logout-float-btn {
     position: fixed;

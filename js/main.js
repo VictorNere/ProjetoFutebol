@@ -1,18 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- LÓGICA DO HEADER (CORRIGIDA) ---
-    const header = document.querySelector('.site-header');
+    // --- LÓGICA DO HEADER (FIXO COM TOGGLE MOBILE) ---
+    // A lógica de esconder no desktop foi REMOVIDA
     const mobileToggle = document.querySelector('.mobile-nav-toggle');
-    let hideHeaderTimer;
-    
     const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    const showHeader = () => {
-        document.body.classList.remove('header-hidden');
-    };
-    const hideHeader = () => {
-        document.body.classList.add('header-hidden');
-    };
+    const showHeader = () => document.body.classList.remove('header-hidden');
+    const hideHeader = () => document.body.classList.add('header-hidden');
     
     if (isMobile) {
         // Lógica de Celular (Clique na Setinha)
@@ -21,38 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.classList.toggle('header-hidden');
             });
         }
-        // No celular, o header começa visível por padrão
-        showHeader();
-
+        // No celular, o header começa escondido por padrão
+        hideHeader();
     } else {
-        // Lógica de Desktop (Mouse) - CORRIGIDA
-        const topZone = 80; // Altura da "zona quente" no topo
-        
-        // Começa visível, mas programa para esconder
+        // No desktop, o header começa visível
         showHeader();
-        hideHeaderTimer = setTimeout(hideHeader, 5000); 
-        
-        // Mostra se o mouse entrar na zona superior
-        document.addEventListener('mousemove', (e) => {
-            if (e.clientY < topZone) {
-                showHeader();
-                clearTimeout(hideHeaderTimer); // Cancela qualquer timer de esconder
-            }
-        });
-
-        // Mantém aberto se o mouse estiver sobre o header
-        if (header) {
-            header.addEventListener('mouseenter', () => {
-                showHeader(); // Garante que está visível
-                clearTimeout(hideHeaderTimer); // Cancela o timer de esconder
-            });
-
-            // Agenda para esconder 5s após o mouse SAIR do header
-            header.addEventListener('mouseleave', () => {
-                clearTimeout(hideHeaderTimer);
-                hideHeaderTimer = setTimeout(hideHeader, 5000); // 5 segundos
-            });
-        }
     }
     
     // --- LÓGICA GLOBAL (Toast, Navegação) ---
