@@ -1,44 +1,61 @@
-document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o evento async
+document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- LÓGICA DO HEADER (Abrir/Fechar) ---
+    // --- LÓGICA DO HEADER (CORRIGIDA) ---
     const header = document.querySelector('.site-header');
     const mobileToggle = document.querySelector('.mobile-nav-toggle');
     let hideHeaderTimer;
+    
     const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    const showHeader = () => document.body.classList.remove('header-hidden');
-    const hideHeader = () => document.body.classList.add('header-hidden');
+    const showHeader = () => {
+        document.body.classList.remove('header-hidden');
+    };
+    const hideHeader = () => {
+        document.body.classList.add('header-hidden');
+    };
     
     if (isMobile) {
+        // Lógica de Celular (Clique na Setinha)
         if (mobileToggle) {
             mobileToggle.addEventListener('click', () => {
                 document.body.classList.toggle('header-hidden');
             });
         }
+        // No celular, o header começa visível por padrão
         showHeader();
+
     } else {
-        const topZone = 80;
+        // Lógica de Desktop (Mouse) - CORRIGIDA
+        const topZone = 80; // Altura da "zona quente" no topo
+        
+        // Começa visível, mas programa para esconder
         showHeader();
         hideHeaderTimer = setTimeout(hideHeader, 5000); 
+        
+        // Mostra se o mouse entrar na zona superior
         document.addEventListener('mousemove', (e) => {
             if (e.clientY < topZone) {
                 showHeader();
-                clearTimeout(hideHeaderTimer);
+                clearTimeout(hideHeaderTimer); // Cancela qualquer timer de esconder
             }
         });
+
+        // Mantém aberto se o mouse estiver sobre o header
         if (header) {
             header.addEventListener('mouseenter', () => {
-                showHeader();
-                clearTimeout(hideHeaderTimer);
+                showHeader(); // Garante que está visível
+                clearTimeout(hideHeaderTimer); // Cancela o timer de esconder
             });
+
+            // Agenda para esconder 5s após o mouse SAIR do header
             header.addEventListener('mouseleave', () => {
                 clearTimeout(hideHeaderTimer);
-                hideHeaderTimer = setTimeout(hideHeader, 5000);
+                hideHeaderTimer = setTimeout(hideHeader, 5000); // 5 segundos
             });
         }
     }
     
-    // --- LÓGICA GLOBAL (Toast, Navegação, Formato) ---
+    // --- LÓGICA GLOBAL (Toast, Navegação) ---
     const navLinks = document.querySelectorAll('.main-nav .nav-link');
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
@@ -66,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
         }).format(value);
     };
 
-    // --- LÓGICA DE AUTENTICAÇÃO (CORRIGIDA) ---
+    // --- LÓGICA DE AUTENTICAÇÃO ---
     const loginModal = document.getElementById('login-modal');
     const loginBackdrop = document.getElementById('login-backdrop');
     const btnOpenLogin = document.getElementById('btn-open-login');
@@ -96,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password }),
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Senha incorreta');
                 
@@ -113,7 +130,6 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
             try {
-                // <-- ADICIONADO credentials: 'include'
                 await fetch('/api/logout', { method: 'POST', credentials: 'include' }); 
                 document.body.classList.remove('is-admin');
                 showToast('Deslogado.', 'success');
@@ -124,10 +140,8 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
         });
     }
 
-    // Função principal que roda em todas as páginas
     const checkAuthStatus = async () => {
         try {
-            // <-- ADICIONADO credentials: 'include'
             const response = await fetch('/api/check-auth', { credentials: 'include' }); 
             if (response.ok) {
                 document.body.classList.add('is-admin');
@@ -173,10 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
     });
 
     // --- INICIALIZAÇÃO ---
-    // PRIMEIRO, checa o status de login
     await checkAuthStatus();
-    
-    // AGORA, roda a lógica da página específica
     
     // --- LÓGICA DA PÁGINA DE JOGADORES ---
     const formAddJogador = document.getElementById('form-add-jogador');
@@ -282,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 const response = await fetch(`/api/jogadores/${id}`, { 
                     method: 'PUT', 
                     body: formData, 
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Falha ao atualizar jogador');
                 await response.json();
@@ -320,7 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                     try {
                         const response = await fetch(`/api/jogadores/${jogador.id}`, { 
                             method: 'DELETE', 
-                            credentials: 'include' // <-- ADICIONADO
+                            credentials: 'include'
                         });
                         if (!response.ok) throw new Error('Falha ao remover jogador');
                         card.remove();
@@ -338,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
 
         const carregarJogadores = async () => {
             try {
-                const response = await fetch('/api/jogadores', { credentials: 'include' }); // <-- ADICIONADO
+                const response = await fetch('/api/jogadores', { credentials: 'include' });
                 if (!response.ok) throw new Error('Falha ao buscar jogadores');
                 const jogadores = await response.json();
                 listaJogadoresEl.innerHTML = '';
@@ -363,7 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 const response = await fetch('/api/jogadores', { 
                     method: 'POST', 
                     body: formData, 
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Falha ao adicionar jogador');
                 const jogadorSalvo = await response.json();
@@ -382,7 +393,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 try {
                     const response = await fetch('/api/jogadores/reset', { 
                         method: 'POST', 
-                        credentials: 'include' // <-- ADICIONADO
+                        credentials: 'include'
                     });
                     if (!response.ok) throw new Error('Falha ao resetar jogadores');
                     carregarJogadores();
@@ -416,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
             pill.dataset.id = jogador.id;
             pill.dataset.isGoleiro = jogador.isGoleiro;
             pill.textContent = jogador.nome;
-            pill.draggable = document.body.classList.contains('is-admin'); // Só pode arrastar se for admin
+            pill.draggable = document.body.classList.contains('is-admin');
             if (jogador.isGoleiro) {
                 pill.classList.add('goleiro-pill');
                 pill.textContent = '🧤 ' + jogador.nome;
@@ -505,7 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataToSave),
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Falha ao salvar');
                 showToast('Escalação salva com sucesso!', 'success');
@@ -514,12 +525,13 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 showToast('Erro ao salvar a escalação.', 'error');
             }
         });
+
         btnLimparTimes.addEventListener('click', () => {
             openConfirmModal("Limpar todas as escalações e mover todos os jogadores para 'Disponíveis'?", async () => {
                 try {
                     const response = await fetch('/api/time-do-mes/reset', { 
                         method: 'POST', 
-                        credentials: 'include' // <-- ADICIONADO
+                        credentials: 'include'
                     });
                     if (!response.ok) throw new Error('Falha ao limpar times');
                     init();
@@ -529,6 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 }
             });
         });
+
         const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
         btnGerarTimes.addEventListener('click', () => {
             let goleirosDisponiveis = shuffleArray([...todosJogadores.filter(j => j.isGoleiro)]);
@@ -555,11 +568,12 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
             poolTemp.forEach(jogador => poolDisponiveis.appendChild(createPlayerPill(jogador)));
             showToast('Times gerados aleatoriamente!', 'success');
         });
+
         const init = async () => {
             try {
                 const [jogadoresRes, timeRes] = await Promise.all([ 
-                    fetch('/api/jogadores', { credentials: 'include' }), // <-- ADICIONADO
-                    fetch('/api/time-do-mes', { credentials: 'include' }) // <-- ADICIONADO
+                    fetch('/api/jogadores', { credentials: 'include' }),
+                    fetch('/api/time-do-mes', { credentials: 'include' })
                 ]);
                 if (!jogadoresRes.ok || !timeRes.ok) throw new Error('Falha ao carregar dados iniciais');
                 todosJogadores = await jogadoresRes.json();
@@ -603,7 +617,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
         };
         const carregarJogadoresDropdown = async () => {
             try {
-                const response = await fetch('/api/jogadores', { credentials: 'include' }); // <-- ADICIONADO
+                const response = await fetch('/api/jogadores', { credentials: 'include' });
                 if (!response.ok) throw new Error('Falha ao buscar jogadores');
                 const jogadores = await response.json();
                 jogadores.forEach(jogador => {
@@ -619,7 +633,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
         };
         const carregarCaixinha = async () => {
             try {
-                const response = await fetch('/api/caixinha', { credentials: 'include' }); // <-- ADICIONADO
+                const response = await fetch('/api/caixinha', { credentials: 'include' });
                 if (!response.ok) throw new Error('Falha ao carregar caixinha');
                 const data = await response.json();
                 updateUI(data);
@@ -653,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(novaTransacao),
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Falha ao salvar transação');
                 const dataAtualizada = await response.json();
@@ -671,7 +685,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 try {
                     const response = await fetch('/api/caixinha/reset', { 
                         method: 'POST', 
-                        credentials: 'include' // <-- ADICIONADO
+                        credentials: 'include'
                     });
                     if (!response.ok) throw new Error('Falha ao resetar caixinha');
                     carregarCaixinha();
@@ -705,7 +719,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
         const renderPagamentos = () => {
             tableBody.innerHTML = '';
             let totalArrecadado = 0;
-            const isAdmin = document.body.classList.contains('is-admin'); // Checa se é admin
+            const isAdmin = document.body.classList.contains('is-admin');
             
             todosJogadores.forEach(jogador => {
                 const status = pagamentosData.pagamentosJogadores[String(jogador.id)] || { mensalidade: null, churrasco: null };
@@ -771,7 +785,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ valorChurrascoBase: novoValor }),
-                    credentials: 'include' // <-- ADICIONADO
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('Falha ao salvar valor');
                 pagamentosData = await response.json();
@@ -796,7 +810,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ jogadorId: id, jogadorNome: nome, tipo, valor: parseFloat(valor) }),
-                        credentials: 'include' // <-- ADICIONADO
+                        credentials: 'include'
                     });
                     if (!response.ok) {
                         const err = await response.json(); throw new Error(err.message || 'Falha ao registrar pagamento');
@@ -816,7 +830,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ jogadorId: id, tipo }),
-                            credentials: 'include' // <-- ADICIONADO
+                            credentials: 'include'
                         });
                         if (!response.ok) {
                             const err = await response.json(); throw new Error(err.message || 'Falha ao cancelar');
@@ -837,7 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
                 try {
                     const response = await fetch('/api/pagamentos/reset', { 
                         method: 'POST', 
-                        credentials: 'include' // <-- ADICIONADO
+                        credentials: 'include'
                     });
                     if (!response.ok) throw new Error('Falha ao zerar pagamentos');
                     pagamentosData = await response.json();
@@ -853,8 +867,8 @@ document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o event
             try {
                 // O auth check já foi feito no início
                 const [jogadoresRes, pagamentosRes] = await Promise.all([
-                    fetch('/api/jogadores', { credentials: 'include' }), // <-- ADICIONADO
-                    fetch('/api/pagamentos', { credentials: 'include' }) // <-- ADICIONADO
+                    fetch('/api/jogadores', { credentials: 'include' }),
+                    fetch('/api/pagamentos', { credentials: 'include' })
                 ]);
                 if (!jogadoresRes.ok || !pagamentosRes.ok) throw new Error('Falha ao carregar dados');
                 todosJogadores = await jogadoresRes.json();

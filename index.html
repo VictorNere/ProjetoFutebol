@@ -7,6 +7,7 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/cropper.min.css" />
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,10 +21,6 @@
                 <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
             </ul>
         </nav>
-        <div class="auth-buttons">
-            <button id="btn-open-login" class="btn-submit login-btn">Login Admin</button>
-            <button id="btn-logout" class="btn-danger logout-btn admin-only">Sair</button>
-        </div>
     </header>
     <button class="mobile-nav-toggle" aria-label="Toggle navigation">
         <i class="fa-solid fa-bars"></i>
@@ -47,6 +44,13 @@
         <p>&copy; 2025 ProjetoFutebol. Desenvolvido por Victor Gustavo Santin.</p>
     </footer>
     
+    <button id="btn-open-login" class="login-float-btn login-btn" aria-label="Login Admin">
+        <i class="fa-solid fa-user-shield"></i>
+    </button>
+    <button id="btn-logout" class="logout-float-btn logout-btn admin-only" aria-label="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+    
     <div class="login-backdrop" id="login-backdrop"></div>
     <div class="login-modal" id="login-modal">
         <h2>Login de Administrador</h2>
@@ -63,7 +67,14 @@
     </div>
     
     <div class="cropper-backdrop" id="cropper-backdrop"></div>
-    <div class="cropper-modal" id="cropper-modal"></div>
+    <div class="cropper-modal" id="cropper-modal">
+        <h2>Recortar Imagem</h2>
+        <div class="cropper-img-container">
+            <img id="img-to-crop">
+        </div>
+        <button id="btn-confirm-crop" class="btn-submit">Confirmar Recorte</button>
+    </div>
+
     <div class="confirm-backdrop" id="confirm-backdrop"></div>
     <div class="confirm-modal" id="confirm-modal">
         <h2>Atenção</h2>
@@ -73,6 +84,31 @@
             <button id="btn-confirm-yes" class="btn-danger">Sim</button>
         </div>
     </div>
+
+    <div class="edit-backdrop" id="edit-backdrop"></div>
+    <div class="edit-modal" id="edit-modal">
+        <h2>Editar Jogador</h2>
+        <form id="form-edit-jogador" class="player-form" style="max-width: none;">
+            <input type="hidden" id="edit-jogador-id">
+            <div class="form-group">
+                <label for="edit-nome-jogador">Nome:</label>
+                <input type="text" id="edit-nome-jogador" name="nome" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-foto-jogador">Nova Foto (Opcional):</label>
+                <input type="file" id="edit-foto-jogador" accept="image/*">
+            </div>
+            <div class="form-group form-group-check" style="padding-top: 0; justify-content: flex-start;">
+                <label for="edit-goleiro-jogador">É Goleiro?</label>
+                <input type="checkbox" id="edit-goleiro-jogador" name="isGoleiro">
+            </div>
+            <div class="confirm-actions">
+                <button type="button" id="btn-cancel-edit" class="btn-cancel">Cancelar</button>
+                <button type="submit" class="btn-submit">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+    
     <div class="toast-container" id="toast-container"></div>
     
     <script src="js/cropper.min.js"></script>

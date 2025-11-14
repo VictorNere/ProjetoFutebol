@@ -21,10 +21,6 @@
                 <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
             </ul>
         </nav>
-        <div class="auth-buttons">
-            <button id="btn-open-login" class="btn-submit login-btn">Login Admin</button>
-            <button id="btn-logout" class="btn-danger logout-btn admin-only">Sair</button>
-        </div>
     </header>
     <button class="mobile-nav-toggle" aria-label="Toggle navigation">
         <i class="fa-solid fa-bars"></i>
@@ -40,6 +36,7 @@
                 <h2>Saldo Total</h2>
                 <span id="saldo-total-display">R$ 0,00</span>
             </div>
+            
             <div class="caixinha-form-card admin-only">
                 <h2>Nova Transação</h2>
                 <form id="form-caixinha" class="caixinha-form">
@@ -69,13 +66,21 @@
                 <hr class="danger-zone-divider">
                 <button id="btn-reset-caixinha" class="btn-danger-full">Zerar Toda a Caixinha</button>
             </div>
+            
             <div class="caixinha-hist-card">
                 <h2>Histórico de Transações</h2>
                 <ul id="hist-transacoes-lista" class="hist-transacoes-lista">
-                </ul>
+                    </ul>
             </div>
         </div>
     </main>
+    
+    <button id="btn-open-login" class="login-float-btn login-btn" aria-label="Login Admin">
+        <i class="fa-solid fa-user-shield"></i>
+    </button>
+    <button id="btn-logout" class="logout-float-btn logout-btn admin-only" aria-label="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
     
     <div class="login-backdrop" id="login-backdrop"></div>
     <div class="login-modal" id="login-modal">
@@ -103,6 +108,9 @@
             <button id="btn-confirm-yes" class="btn-danger">Sim</button>
         </div>
     </div>
+    <div class="edit-backdrop" id="edit-backdrop"></div>
+    <div class="edit-modal" id="edit-modal"></div>
+    
     <div class="toast-container" id="toast-container"></div>
     <script src="js/cropper.min.js"></script>
     <script src="js/main.js"></script>

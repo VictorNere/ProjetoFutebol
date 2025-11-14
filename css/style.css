@@ -23,7 +23,7 @@ body {
     background-color: var(--primary-bg);
     color: var(--text-color);
     transition: padding-top 0.4s cubic-bezier(0.2, 0, 0, 1);
-    padding-top: 70px; /* Altura base do header no desktop */
+    padding-top: 70px;
 }
 
 body.header-hidden {
@@ -175,6 +175,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 
 
+/* --- RESPONSIVIDADE MÓVEL (CORRIGIDA) --- */
 @media (max-width: 800px) {
 
     body {
@@ -218,6 +219,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
         grid-row: auto;
     }
     
+    /* CORRIGE TELA CORTADA */
     .caixinha-hist-card,
     .pagamentos-lista-card {
         max-height: 50vh;
@@ -236,6 +238,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 
 
+/* --- O RESTO DO SEU CSS --- */
 .form-section {
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 2rem;
@@ -949,51 +952,58 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 .btn-danger-full:hover { background-color: var(--danger-hover); }
 
-/* --- Estilos de Login e Admin --- */
+/* --- NOVOS ESTILOS DE LOGIN FLUTUANTE --- */
 .admin-only {
-    display: none;
+    display: none !important;
 }
 body.is-admin .admin-only {
-    display: block;
+    display: block !important;
 }
 body.is-admin .admin-only-flex {
-    display: flex;
+    display: flex !important;
 }
 body.is-admin .admin-only-grid {
-    display: grid;
+    display: grid !important;
 }
 body.is-admin .login-btn {
-    display: none;
+    display: none !important;
 }
 body.is-admin .logout-btn {
-    display: block;
+    display: block !important;
 }
 
-.auth-buttons {
-    position: absolute;
-    top: 50%;
-    right: 1.5rem;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 1rem;
-}
-.logout-btn {
-    display: none;
-    background: var(--danger-color);
-    color: white;
-}
-.login-btn, .logout-btn {
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: bold;
+/* REMOVIDO: .auth-buttons */
+
+.login-float-btn, .logout-float-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: var(--secondary-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.3rem;
     cursor: pointer;
+    z-index: 1002; /* Acima do toggle mobile */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
 }
-.login-btn:hover, .logout-btn:hover {
-    transform: scale(1.05);
+.logout-float-btn {
+    color: var(--danger-color);
+    display: none; /* Começa escondido */
 }
+.login-float-btn:hover, .logout-float-btn:hover {
+    transform: scale(1.1);
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+}
+.logout-float-btn:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
 
 .login-backdrop {
     position: fixed;
@@ -1031,10 +1041,4 @@ body.is-admin .logout-btn {
 .login-modal .form-group input {
     width: 100%;
     font-size: 1.1rem;
-}
-
-@media (max-width: 800px) {
-    .auth-buttons {
-        right: 65px;
-    }
 }
