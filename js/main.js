@@ -1,61 +1,44 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { // <-- Torna o evento async
     
-    // --- LÓGICA DO HEADER (CORRIGIDA) ---
+    // --- LÓGICA DO HEADER (Abrir/Fechar) ---
     const header = document.querySelector('.site-header');
     const mobileToggle = document.querySelector('.mobile-nav-toggle');
     let hideHeaderTimer;
-    
     const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    const showHeader = () => {
-        document.body.classList.remove('header-hidden');
-    };
-    const hideHeader = () => {
-        document.body.classList.add('header-hidden');
-    };
+    const showHeader = () => document.body.classList.remove('header-hidden');
+    const hideHeader = () => document.body.classList.add('header-hidden');
     
     if (isMobile) {
-        // Lógica de Celular (Clique na Setinha)
         if (mobileToggle) {
             mobileToggle.addEventListener('click', () => {
                 document.body.classList.toggle('header-hidden');
             });
         }
-        // No celular, o header começa visível por padrão
         showHeader();
-
     } else {
-        // Lógica de Desktop (Mouse) - CORRIGIDA
-        const topZone = 80; // Altura da "zona quente" no topo
-        
-        // Começa visível, mas programa para esconder
+        const topZone = 80;
         showHeader();
         hideHeaderTimer = setTimeout(hideHeader, 5000); 
-        
-        // Mostra se o mouse entrar na zona superior
         document.addEventListener('mousemove', (e) => {
             if (e.clientY < topZone) {
                 showHeader();
-                clearTimeout(hideHeaderTimer); // Cancela qualquer timer de esconder
+                clearTimeout(hideHeaderTimer);
             }
         });
-
-        // Mantém aberto se o mouse estiver sobre o header
         if (header) {
             header.addEventListener('mouseenter', () => {
-                showHeader(); // Garante que está visível
-                clearTimeout(hideHeaderTimer); // Cancela o timer de esconder
+                showHeader();
+                clearTimeout(hideHeaderTimer);
             });
-
-            // Agenda para esconder 5s após o mouse SAIR do header
             header.addEventListener('mouseleave', () => {
                 clearTimeout(hideHeaderTimer);
-                hideHeaderTimer = setTimeout(hideHeader, 5000); // 5 segundos
+                hideHeaderTimer = setTimeout(hideHeader, 5000);
             });
         }
     }
     
-    // --- LÓGICA GLOBAL (Toast, Navegação) ---
+    // --- LÓGICA GLOBAL (Toast, Navegação, Formato) ---
     const navLinks = document.querySelectorAll('.main-nav .nav-link');
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
@@ -83,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(value);
     };
 
-    // --- LÓGICA DE AUTENTICAÇÃO (NOVO) ---
+    // --- LÓGICA DE AUTENTICAÇÃO (CORRIGIDA) ---
     const loginModal = document.getElementById('login-modal');
     const loginBackdrop = document.getElementById('login-backdrop');
     const btnOpenLogin = document.getElementById('btn-open-login');
@@ -112,7 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password }),
+                    credentials: 'include' // <-- ADICIONADO
                 });
                 if (!response.ok) throw new Error('Senha incorreta');
                 
@@ -129,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
             try {
-                await fetch('/api/logout', { method: 'POST' });
+                // <-- ADICIONADO credentials: 'include'
+                await fetch('/api/logout', { method: 'POST', credentials: 'include' }); 
                 document.body.classList.remove('is-admin');
                 showToast('Deslogado.', 'success');
                 location.reload();
@@ -139,9 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Função principal que roda em todas as páginas
     const checkAuthStatus = async () => {
         try {
-            const response = await fetch('/api/check-auth');
+            // <-- ADICIONADO credentials: 'include'
+            const response = await fetch('/api/check-auth', { credentials: 'include' }); 
             if (response.ok) {
                 document.body.classList.add('is-admin');
             } else {
@@ -185,6 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
         closeConfirmModal();
     });
 
+    // --- INICIALIZAÇÃO ---
+    // PRIMEIRO, checa o status de login
+    await checkAuthStatus();
+    
+    // AGORA, roda a lógica da página específica
+    
     // --- LÓGICA DA PÁGINA DE JOGADORES ---
     const formAddJogador = document.getElementById('form-add-jogador');
     const listaJogadoresEl = document.getElementById('lista-jogadores');
@@ -286,7 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 formData.append('foto', croppedImageBlob, 'jogador.jpg');
             }
             try {
-                const response = await fetch(`/api/jogadores/${id}`, { method: 'PUT', body: formData });
+                const response = await fetch(`/api/jogadores/${id}`, { 
+                    method: 'PUT', 
+                    body: formData, 
+                    credentials: 'include' // <-- ADICIONADO
+                });
                 if (!response.ok) throw new Error('Falha ao atualizar jogador');
                 await response.json();
                 closeEditModal();
@@ -321,7 +318,10 @@ document.addEventListener('DOMContentLoaded', () => {
             card.querySelector('.btn-remover-jogador').addEventListener('click', () => {
                 openConfirmModal(`Tem certeza que deseja remover o jogador "${jogador.nome}"?`, async () => {
                     try {
-                        const response = await fetch(`/api/jogadores/${jogador.id}`, { method: 'DELETE' });
+                        const response = await fetch(`/api/jogadores/${jogador.id}`, { 
+                            method: 'DELETE', 
+                            credentials: 'include' // <-- ADICIONADO
+                        });
                         if (!response.ok) throw new Error('Falha ao remover jogador');
                         card.remove();
                         showToast('Jogador removido com sucesso!', 'success');
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const carregarJogadores = async () => {
             try {
-                const response = await fetch('/api/jogadores');
+                const response = await fetch('/api/jogadores', { credentials: 'include' }); // <-- ADICIONADO
                 if (!response.ok) throw new Error('Falha ao buscar jogadores');
                 const jogadores = await response.json();
                 listaJogadoresEl.innerHTML = '';
@@ -360,7 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('isGoleiro', document.getElementById('goleiro-jogador').checked);
             formData.append('foto', croppedImageBlob, 'jogador.jpg');
             try {
-                const response = await fetch('/api/jogadores', { method: 'POST', body: formData });
+                const response = await fetch('/api/jogadores', { 
+                    method: 'POST', 
+                    body: formData, 
+                    credentials: 'include' // <-- ADICIONADO
+                });
                 if (!response.ok) throw new Error('Falha ao adicionar jogador');
                 const jogadorSalvo = await response.json();
                 criarCardJogador(jogadorSalvo);
@@ -376,7 +380,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnResetJogadores.addEventListener('click', () => {
             openConfirmModal("TEM CERTEZA? Isso vai apagar TODOS os jogadores, fotos, pagamentos e times. Esta ação não pode ser desfeita.", async () => {
                 try {
-                    const response = await fetch('/api/jogadores/reset', { method: 'POST' });
+                    const response = await fetch('/api/jogadores/reset', { 
+                        method: 'POST', 
+                        credentials: 'include' // <-- ADICIONADO
+                    });
                     if (!response.ok) throw new Error('Falha ao resetar jogadores');
                     carregarJogadores();
                     showToast('Todos os jogadores e dados foram removidos.', 'success');
@@ -392,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DO TIME DO MÊS ---
     const teamBuilderContainer = document.getElementById('team-builder-container');
     if (teamBuilderContainer) {
+        
         let todosJogadores = [];
         let timeDoMes = {};
         let draggedPlayer = null;
@@ -401,18 +409,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnLimparTimes = document.getElementById('btn-limpar-times');
         const btnGerarTimes = document.getElementById('btn-gerar-times');
         const getJogadorById = (id) => todosJogadores.find(j => j.id == id);
+
         const createPlayerPill = (jogador) => {
             const pill = document.createElement('div');
             pill.classList.add('player-pill');
             pill.dataset.id = jogador.id;
             pill.dataset.isGoleiro = jogador.isGoleiro;
             pill.textContent = jogador.nome;
-            pill.draggable = true;
+            pill.draggable = document.body.classList.contains('is-admin'); // Só pode arrastar se for admin
             if (jogador.isGoleiro) {
                 pill.classList.add('goleiro-pill');
                 pill.textContent = '🧤 ' + jogador.nome;
             }
             pill.addEventListener('dragstart', (e) => {
+                if (!document.body.classList.contains('is-admin')) {
+                    e.preventDefault();
+                    return;
+                }
                 draggedPlayer = e.target;
                 setTimeout(() => pill.style.display = 'none', 0);
             });
@@ -452,9 +465,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
         allDropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragover', (e) => { 
+                if (!document.body.classList.contains('is-admin')) return;
+                e.preventDefault(); 
+                zone.classList.add('drag-over'); 
+            });
             zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
             zone.addEventListener('drop', (e) => {
+                if (!document.body.classList.contains('is-admin')) return;
                 e.preventDefault();
                 zone.classList.remove('drag-over');
                 if (!draggedPlayer) return;
@@ -467,6 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 zone.appendChild(draggedPlayer);
             });
         });
+        
         btnSalvarTimes.addEventListener('click', async () => {
             const getIdsFromSlot = (slot) => Array.from(slot.children).map(pill => Number(pill.dataset.id));
             const dataToSave = {
@@ -485,7 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/time-do-mes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSave)
+                    body: JSON.stringify(dataToSave),
+                    credentials: 'include' // <-- ADICIONADO
                 });
                 if (!response.ok) throw new Error('Falha ao salvar');
                 showToast('Escalação salva com sucesso!', 'success');
@@ -497,7 +517,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLimparTimes.addEventListener('click', () => {
             openConfirmModal("Limpar todas as escalações e mover todos os jogadores para 'Disponíveis'?", async () => {
                 try {
-                    const response = await fetch('/api/time-do-mes/reset', { method: 'POST' });
+                    const response = await fetch('/api/time-do-mes/reset', { 
+                        method: 'POST', 
+                        credentials: 'include' // <-- ADICIONADO
+                    });
                     if (!response.ok) throw new Error('Falha ao limpar times');
                     init();
                     showToast('Times limpos!', 'success');
@@ -534,7 +557,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const init = async () => {
             try {
-                const [jogadoresRes, timeRes] = await Promise.all([ fetch('/api/jogadores'), fetch('/api/time-do-mes') ]);
+                const [jogadoresRes, timeRes] = await Promise.all([ 
+                    fetch('/api/jogadores', { credentials: 'include' }), // <-- ADICIONADO
+                    fetch('/api/time-do-mes', { credentials: 'include' }) // <-- ADICIONADO
+                ]);
                 if (!jogadoresRes.ok || !timeRes.ok) throw new Error('Falha ao carregar dados iniciais');
                 todosJogadores = await jogadoresRes.json();
                 timeDoMes = await timeRes.json();
@@ -577,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const carregarJogadoresDropdown = async () => {
             try {
-                const response = await fetch('/api/jogadores');
+                const response = await fetch('/api/jogadores', { credentials: 'include' }); // <-- ADICIONADO
                 if (!response.ok) throw new Error('Falha ao buscar jogadores');
                 const jogadores = await response.json();
                 jogadores.forEach(jogador => {
@@ -593,7 +619,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const carregarCaixinha = async () => {
             try {
-                const response = await fetch('/api/caixinha');
+                const response = await fetch('/api/caixinha', { credentials: 'include' }); // <-- ADICIONADO
                 if (!response.ok) throw new Error('Falha ao carregar caixinha');
                 const data = await response.json();
                 updateUI(data);
@@ -626,7 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/caixinha', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(novaTransacao)
+                    body: JSON.stringify(novaTransacao),
+                    credentials: 'include' // <-- ADICIONADO
                 });
                 if (!response.ok) throw new Error('Falha ao salvar transação');
                 const dataAtualizada = await response.json();
@@ -642,7 +669,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(btnResetCaixinha) btnResetCaixinha.addEventListener('click', () => {
             openConfirmModal("TEM CERTEZA? Isso vai apagar todo o histórico de transações e zerar o saldo.", async () => {
                 try {
-                    const response = await fetch('/api/caixinha/reset', { method: 'POST' });
+                    const response = await fetch('/api/caixinha/reset', { 
+                        method: 'POST', 
+                        credentials: 'include' // <-- ADICIONADO
+                    });
                     if (!response.ok) throw new Error('Falha ao resetar caixinha');
                     carregarCaixinha();
                     showToast('Caixinha zerada com sucesso!', 'success');
@@ -671,31 +701,49 @@ document.addEventListener('DOMContentLoaded', () => {
         let todosJogadores = [];
         let pagamentosData = {};
         let valorMensalidadePorJogador = 0;
+        
         const renderPagamentos = () => {
             tableBody.innerHTML = '';
             let totalArrecadado = 0;
+            const isAdmin = document.body.classList.contains('is-admin'); // Checa se é admin
+            
             todosJogadores.forEach(jogador => {
-                const status = pagamentosData.pagamentosJogadores[jogador.id] || { mensalidade: null, churrasco: null };
+                const status = pagamentosData.pagamentosJogadores[String(jogador.id)] || { mensalidade: null, churrasco: null };
+                
                 let btnMensalidade;
                 if (jogador.isGoleiro) {
                     btnMensalidade = `<button class="btn-pagamento isento" disabled>Isento</button>`;
                 } else if (status.mensalidade) {
-                    btnMensalidade = `<button class="btn-pagamento cancelar admin-only" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
                     totalArrecadado += valorMensalidadePorJogador;
-                    if(!document.body.classList.contains('is-admin')) btnMensalidade = `<button class="btn-pagamento pago" disabled>Pago</button>`;
+                    if (isAdmin) {
+                        btnMensalidade = `<button class="btn-pagamento cancelar" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
+                    } else {
+                        btnMensalidade = `<button class="btn-pagamento pago" disabled>Pago</button>`;
+                    }
                 } else {
-                    btnMensalidade = `<button class="btn-pagamento pagar admin-only" data-tipo="mensalidade" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${valorMensalidadePorJogador}">Pagar ${formatCurrency(valorMensalidadePorJogador)}</button>`;
-                    if(!document.body.classList.contains('is-admin')) btnMensalidade = `<span>Pendente</span>`;
+                    if (isAdmin) {
+                        btnMensalidade = `<button class="btn-pagamento pagar" data-tipo="mensalidade" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${valorMensalidadePorJogador}">Pagar ${formatCurrency(valorMensalidadePorJogador)}</button>`;
+                    } else {
+                        btnMensalidade = `<span>Pendente</span>`;
+                    }
                 }
+
                 let btnChurrasco;
                 if (status.churrasco) {
-                    btnChurrasco = `<button class="btn-pagamento cancelar admin-only" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
                     totalArrecadado += pagamentosData.valorChurrascoBase;
-                    if(!document.body.classList.contains('is-admin')) btnChurrasco = `<button class="btn-pagamento pago" disabled>Pago</button>`;
+                    if (isAdmin) {
+                        btnChurrasco = `<button class="btn-pagamento cancelar" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
+                    } else {
+                        btnChurrasco = `<button class="btn-pagamento pago" disabled>Pago</button>`;
+                    }
                 } else {
-                    btnChurrasco = `<button class="btn-pagamento pagar admin-only" data-tipo="churrasco" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${pagamentosData.valorChurrascoBase}">Pagar ${formatCurrency(pagamentosData.valorChurrascoBase)}</button>`;
-                    if(!document.body.classList.contains('is-admin')) btnChurrasco = `<span>Pendente</span>`;
+                    if (isAdmin) {
+                        btnChurrasco = `<button class="btn-pagamento pagar" data-tipo="churrasco" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${pagamentosData.valorChurrascoBase}">Pagar ${formatCurrency(pagamentosData.valorChurrascoBase)}</button>`;
+                    } else {
+                        btnChurrasco = `<span>Pendente</span>`;
+                    }
                 }
+                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${jogador.nome} ${jogador.isGoleiro ? '🧤' : ''}</td>
@@ -705,8 +753,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableBody.appendChild(tr);
             });
             resumoArrecadado.textContent = formatCurrency(totalArrecadado);
-            checkAuthStatus(); // Re-aplica as classes admin-only
         };
+
         const updateResumo = () => {
             const jogadoresDeLinha = todosJogadores.filter(j => !j.isGoleiro).length;
             valorMensalidadePorJogador = jogadoresDeLinha > 0 ? valorMensalidadeBase / jogadoresDeLinha : 0;
@@ -715,13 +763,15 @@ document.addEventListener('DOMContentLoaded', () => {
             resumoChurrasco.textContent = formatCurrency(pagamentosData.valorChurrascoBase);
             valorChurrascoInput.value = pagamentosData.valorChurrascoBase.toFixed(2);
         };
+        
         btnSalvarChurrasco.addEventListener('click', async () => {
             const novoValor = parseFloat(valorChurrascoInput.value);
             try {
                 const response = await fetch('/api/pagamentos/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ valorChurrascoBase: novoValor })
+                    body: JSON.stringify({ valorChurrascoBase: novoValor }),
+                    credentials: 'include' // <-- ADICIONADO
                 });
                 if (!response.ok) throw new Error('Falha ao salvar valor');
                 pagamentosData = await response.json();
@@ -732,6 +782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Erro ao salvar valor.', 'error');
             }
         });
+        
         tableBody.addEventListener('click', async (e) => {
             const btn = e.target;
             const { id, nome, tipo, valor } = btn.dataset;
@@ -744,7 +795,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch('/api/pagamentos/pagar', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ jogadorId: id, jogadorNome: nome, tipo, valor: parseFloat(valor) })
+                        body: JSON.stringify({ jogadorId: id, jogadorNome: nome, tipo, valor: parseFloat(valor) }),
+                        credentials: 'include' // <-- ADICIONADO
                     });
                     if (!response.ok) {
                         const err = await response.json(); throw new Error(err.message || 'Falha ao registrar pagamento');
@@ -763,7 +815,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const response = await fetch('/api/pagamentos/cancelar', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ jogadorId: id, tipo })
+                            body: JSON.stringify({ jogadorId: id, tipo }),
+                            credentials: 'include' // <-- ADICIONADO
                         });
                         if (!response.ok) {
                             const err = await response.json(); throw new Error(err.message || 'Falha ao cancelar');
@@ -778,10 +831,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+        
         btnResetPagamentos.addEventListener('click', () => {
             openConfirmModal("Zerar TODOS os status de pagamento? (Isso NÃO afeta a caixinha).", async () => {
                 try {
-                    const response = await fetch('/api/pagamentos/reset', { method: 'POST' });
+                    const response = await fetch('/api/pagamentos/reset', { 
+                        method: 'POST', 
+                        credentials: 'include' // <-- ADICIONADO
+                    });
                     if (!response.ok) throw new Error('Falha ao zerar pagamentos');
                     pagamentosData = await response.json();
                     updateResumo(); renderPagamentos();
@@ -791,12 +848,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
         const init = async () => {
             try {
-                await checkAuthStatus(); // Espera a verificação de auth
+                // O auth check já foi feito no início
                 const [jogadoresRes, pagamentosRes] = await Promise.all([
-                    fetch('/api/jogadores'),
-                    fetch('/api/pagamentos')
+                    fetch('/api/jogadores', { credentials: 'include' }), // <-- ADICIONADO
+                    fetch('/api/pagamentos', { credentials: 'include' }) // <-- ADICIONADO
                 ]);
                 if (!jogadoresRes.ok || !pagamentosRes.ok) throw new Error('Falha ao carregar dados');
                 todosJogadores = await jogadoresRes.json();
