@@ -21,13 +21,18 @@
                 <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
             </ul>
         </nav>
+        <div class="auth-buttons">
+            <button id="btn-open-login" class="btn-submit login-btn">Login Admin</button>
+            <button id="btn-logout" class="btn-danger logout-btn admin-only">Sair</button>
+        </div>
     </header>
     <button class="mobile-nav-toggle" aria-label="Toggle navigation">
-    <i class="fa-solid fa-bars"></i>
-    <i class="fa-solid fa-xmark"></i>
-</button>
+        <i class="fa-solid fa-bars"></i>
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+
     <main class="main-content">
-        <section class="content-section form-section">
+        <section class="content-section form-section admin-only">
             <h1>Cadastrar Novo Jogador</h1>
             <form id="form-add-jogador" class="player-form">
                 <div class="form-row">
@@ -53,13 +58,28 @@
         <section class="content-section" style="max-width: 100%;">
             <div class="team-builder-header">
                 <h1>Jogadores Cadastrados</h1>
-                <button id="btn-reset-jogadores" class="btn-danger">Remover Todos</button>
+                <button id="btn-reset-jogadores" class="btn-danger admin-only">Remover Todos</button>
             </div>
             <div id="lista-jogadores" class="player-grid">
             </div>
         </section>
     </main>
     
+    <div class="login-backdrop" id="login-backdrop"></div>
+    <div class="login-modal" id="login-modal">
+        <h2>Login de Administrador</h2>
+        <form id="form-login">
+            <div class="form-group">
+                <label for="admin-password">Senha:</label>
+                <input type="password" id="admin-password" required>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" id="btn-cancel-login" class="btn-cancel">Cancelar</button>
+                <button type="submit" class="btn-submit">Entrar</button>
+            </div>
+        </form>
+    </div>
+
     <div class="cropper-backdrop" id="cropper-backdrop"></div>
     <div class="cropper-modal" id="cropper-modal">
         <h2>Recortar Imagem</h2>
@@ -68,7 +88,6 @@
         </div>
         <button id="btn-confirm-crop" class="btn-submit">Confirmar Recorte</button>
     </div>
-
     <div class="confirm-backdrop" id="confirm-backdrop"></div>
     <div class="confirm-modal" id="confirm-modal">
         <h2>Atenção</h2>
@@ -78,7 +97,6 @@
             <button id="btn-confirm-yes" class="btn-danger">Sim</button>
         </div>
     </div>
-    
     <div class="edit-backdrop" id="edit-backdrop"></div>
     <div class="edit-modal" id="edit-modal">
         <h2>Editar Jogador</h2>
@@ -102,8 +120,8 @@
             </div>
         </form>
     </div>
-
     <div class="toast-container" id="toast-container"></div>
+    
     <script src="js/cropper.min.js"></script>
     <script src="js/main.js"></script>
 </body>

@@ -47,13 +47,12 @@ body.header-hidden .site-header {
     transform: translateY(-100%);
 }
 
-/* --- ESTILO DA SETINHA/TOGGLE CORRIGIDO --- */
 .mobile-nav-toggle {
-    display: none; /* Escondido no desktop por padrão */
+    display: none; 
     position: fixed;
-    top: 15px; /* Canto superior */
-    right: 15px; /* Canto direito */
-    background: rgba(30, 30, 30, 0.7); /* Fundo semi-transparente */
+    top: 15px;
+    right: 15px;
+    background: rgba(30, 30, 30, 0.7);
     border: 1px solid var(--border-color);
     color: var(--accent-color);
     width: 40px;
@@ -61,29 +60,25 @@ body.header-hidden .site-header {
     border-radius: 8px;
     font-size: 1.2rem;
     cursor: pointer;
-    z-index: 1001; /* Acima do header */
-    opacity: 0.7; /* Transparente */
+    z-index: 1001;
+    opacity: 0.7;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .mobile-nav-toggle:hover {
     opacity: 1;
 }
 .mobile-nav-toggle .fa-bars {
-    display: block; /* Ícone padrão (menu fechado) */
+    display: block;
 }
 .mobile-nav-toggle .fa-xmark {
-    display: none; /* Ícone 'X' (menu aberto) */
+    display: none;
 }
-
-/* Quando o header está escondido, mostra a setinha/ícone de 'abrir' (fa-bars) */
 body.header-hidden .mobile-nav-toggle .fa-bars {
     display: block;
 }
 body.header-hidden .mobile-nav-toggle .fa-xmark {
     display: none;
 }
-
-/* Quando o header está visível, mostra o 'X' para fechar */
 body:not(.header-hidden) .mobile-nav-toggle .fa-bars {
     display: none;
 }
@@ -150,7 +145,6 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
     color: #aaa;
 }
 
-/* Estilos do Footer */
 .site-footer-social {
     width: 100%;
     padding: 2.5rem 1rem;
@@ -181,7 +175,6 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 
 
-/* --- RESPONSIVIDADE MÓVEL (CORRIGIDA) --- */
 @media (max-width: 800px) {
 
     body {
@@ -192,7 +185,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
     }
 
     .mobile-nav-toggle {
-        display: block; /* Mostra o botão no celular */
+        display: block;
     }
 
     .main-nav ul {
@@ -210,14 +203,12 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
         padding: 1rem;
     }
 
-    /* Faz os grids de 2 ou 3 colunas virarem 1 coluna */
     .caixinha-grid,
     .pagamentos-grid,
     .team-builder-container {
         grid-template-columns: 1fr;
     }
 
-    /* Reseta as posições */
     .caixinha-hist-card,
     .pagamentos-lista-card,
     .caixinha-form-card,
@@ -227,11 +218,10 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
         grid-row: auto;
     }
     
-    /* ADICIONA SCROLL HORIZONTAL PARA TABELAS/LISTAS LARGAS */
     .caixinha-hist-card,
     .pagamentos-lista-card {
         max-height: 50vh;
-        overflow-x: auto; /* CORRIGE A TELA CORTADA */
+        overflow-x: auto;
     }
 
     .team-builder-container {
@@ -246,7 +236,6 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 
 
-/* --- O RESTO DO SEU CSS --- */
 .form-section {
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 2rem;
@@ -286,6 +275,7 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 .form-group input[type="url"],
 .form-group input[type="file"],
 .form-group input[type="number"],
+.form-group input[type="password"],
 .form-group select {
     background-color: var(--secondary-bg);
     border: 1px solid var(--border-color);
@@ -585,7 +575,6 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
 }
 .btn-danger:hover { background-color: var(--danger-hover); }
 
-/* --- Z-INDEX CORRIGIDO --- */
 .toast-container {
     position: fixed;
     top: 20px;
@@ -959,3 +948,93 @@ body:not(.header-hidden) .mobile-nav-toggle .fa-xmark {
     transition: all 0.3s ease;
 }
 .btn-danger-full:hover { background-color: var(--danger-hover); }
+
+/* --- Estilos de Login e Admin --- */
+.admin-only {
+    display: none;
+}
+body.is-admin .admin-only {
+    display: block;
+}
+body.is-admin .admin-only-flex {
+    display: flex;
+}
+body.is-admin .admin-only-grid {
+    display: grid;
+}
+body.is-admin .login-btn {
+    display: none;
+}
+body.is-admin .logout-btn {
+    display: block;
+}
+
+.auth-buttons {
+    position: absolute;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 1rem;
+}
+.logout-btn {
+    display: none;
+    background: var(--danger-color);
+    color: white;
+}
+.login-btn, .logout-btn {
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.login-btn:hover, .logout-btn:hover {
+    transform: scale(1.05);
+}
+
+.login-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 200;
+    display: none;
+}
+.login-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    z-index: 201;
+    display: none;
+    width: 90vw;
+    max-width: 400px;
+    text-align: center;
+}
+.login-modal h2 {
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+}
+.login-modal .form-group {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+.login-modal .form-group input {
+    width: 100%;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 800px) {
+    .auth-buttons {
+        right: 65px;
+    }
+}

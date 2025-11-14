@@ -21,16 +21,20 @@
                 <li><a href="/time-do-mes" class="nav-link">Time do Mês</a></li>
             </ul>
         </nav>
+        <div class="auth-buttons">
+            <button id="btn-open-login" class="btn-submit login-btn">Login Admin</button>
+            <button id="btn-logout" class="btn-danger logout-btn admin-only">Sair</button>
+        </div>
     </header>
     <button class="mobile-nav-toggle" aria-label="Toggle navigation">
-    <i class="fa-solid fa-bars"></i>
-    <i class="fa-solid fa-xmark"></i>
-</button>
+        <i class="fa-solid fa-bars"></i>
+        <i class="fa-solid fa-xmark"></i>
+    </button>
 
     <main class="main-content">
         <div class="team-builder-header">
             <h1>Monte os Times do Mês</h1>
-            <div>
+            <div class="admin-only-flex">
                 <button id="btn-gerar-times" class="btn-submit" style="background-color: #0288d1;">Gerar Times Aleatórios</button>
                 <button id="btn-limpar-times" class="btn-cancel">Limpar Times</button>
                 <button id="btn-salvar-times" class="btn-submit">Salvar Escalação</button>
@@ -75,6 +79,21 @@
             </div>
         </div>
     </main>
+    
+    <div class="login-backdrop" id="login-backdrop"></div>
+    <div class="login-modal" id="login-modal">
+        <h2>Login de Administrador</h2>
+        <form id="form-login">
+            <div class="form-group">
+                <label for="admin-password">Senha:</label>
+                <input type="password" id="admin-password" required>
+            </div>
+            <div class="confirm-actions">
+                <button type="button" id="btn-cancel-login" class="btn-cancel">Cancelar</button>
+                <button type="submit" class="btn-submit">Entrar</button>
+            </div>
+        </form>
+    </div>
     
     <div class="cropper-backdrop" id="cropper-backdrop"></div>
     <div class="cropper-modal" id="cropper-modal"></div>

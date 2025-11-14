@@ -5,27 +5,31 @@ const multer = require('multer');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-require('dotenv').config(); // Carrega o .env
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Importante para o Render
+const PORT = process.env.PORT || 3000;
 
-// --- CONFIGURAÇÃO DO BANCO DE DADOS (MongoDB) ---
+app.use(express.static(path.join(__dirname)));
+app.use(express.json());
+app.use(cookieParser());
+
+// --- Configuração MongoDB (Modelos) ---
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('Conectado ao MongoDB Atlas'))
     .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
-// Model para Jogadores
 const jogadorSchema = new mongoose.Schema({
     id: { type: Number, unique: true, index: true },
     nome: String,
     isGoleiro: Boolean,
     foto: String,
-    fotoPublicId: String // Para deletar do Cloudinary
+    fotoPublicId: String
 });
 const Jogador = mongoose.model('Jogador', jogadorSchema);
 
-// Model para Caixinha (documento único)
 const caixinhaSchema = new mongoose.Schema({
     docId: { type: String, default: 'main', unique: true },
     saldoTotal: { type: Number, default: 0 },
@@ -41,7 +45,6 @@ const caixinhaSchema = new mongoose.Schema({
 });
 const Caixinha = mongoose.model('Caixinha', caixinhaSchema);
 
-// Model para Pagamentos (documento único)
 const pagamentosSchema = new mongoose.Schema({
     docId: { type: String, default: 'main', unique: true },
     valorChurrascoBase: { type: Number, default: 0 },
@@ -49,7 +52,6 @@ const pagamentosSchema = new mongoose.Schema({
 });
 const Pagamentos = mongoose.model('Pagamentos', pagamentosSchema);
 
-// Model para Time do Mês (documento único)
 const timeDoMesSchema = new mongoose.Schema({
     docId: { type: String, default: 'main', unique: true },
     time1: { goleiro: Number, linha: [Number], reservas: [Number] },
@@ -57,7 +59,6 @@ const timeDoMesSchema = new mongoose.Schema({
 });
 const TimeDoMes = mongoose.model('TimeDoMes', timeDoMesSchema);
 
-// Funções Helper para "documento único"
 const findOrCreate = async (model, defaultData) => {
     let doc = await model.findOne({ docId: 'main' });
     if (!doc) {
@@ -66,7 +67,7 @@ const findOrCreate = async (model, defaultData) => {
     return doc;
 };
 
-// --- CONFIGURAÇÃO DO UPLOAD (Cloudinary) ---
+// --- Configuração Cloudinary ---
 cloudinary.config({ 
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
     api_key: process.env.CLOUDINARY_API_KEY, 
@@ -83,10 +84,21 @@ const storage = new CloudinaryStorage({
 });
 const upload = multer({ storage: storage });
 
-// --- Middlewares ---
-app.use(express.static(path.join(__dirname)));
-app.use(express.json());
-// Não precisamos mais servir /uploads/ estaticamente
+// --- Middleware de Proteção ---
+const protect = (req, res, next) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: 'Acesso negado' });
+    }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.clearCookie('token');
+        return res.status(401).json({ message: 'Token inválido' });
+    }
+};
 
 // --- Rotas de Páginas ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
@@ -95,25 +107,52 @@ app.get('/caixinha', (req, res) => res.sendFile(path.join(__dirname, 'caixinha.h
 app.get('/jogadores', (req, res) => res.sendFile(path.join(__dirname, 'jogadores.html')));
 app.get('/time-do-mes', (req, res) => res.sendFile(path.join(__dirname, 'time-do-mes.html')));
 
-// --- API de Jogadores ---
+// --- Rotas de Autenticação ---
+app.post('/api/login', (req, res) => {
+    const { password } = req.body;
+    if (password === process.env.ADMIN_PASSWORD) {
+        const token = jwt.sign({ admin: true }, process.env.JWT_SECRET, {
+            expiresIn: '1d'
+        });
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+        return res.status(200).json({ message: 'Login com sucesso' });
+    } else {
+        return res.status(401).json({ message: 'Senha incorreta' });
+    }
+});
+
+app.post('/api/logout', (req, res) => {
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logout com sucesso' });
+});
+
+app.get('/api/check-auth', protect, (req, res) => {
+    res.status(200).json({ admin: true });
+});
+
+// --- API de Jogadores (Protegida) ---
 app.get('/api/jogadores', async (req, res) => {
     const jogadores = await Jogador.find().sort({ nome: 1 });
     res.json(jogadores);
 });
 
-app.post('/api/jogadores', upload.single('foto'), async (req, res) => {
+app.post('/api/jogadores', protect, upload.single('foto'), async (req, res) => {
     const novoJogador = new Jogador({
         id: Date.now(),
         nome: req.body.nome,
         isGoleiro: req.body.isGoleiro === 'true',
-        foto: req.file ? req.file.path : '', // URL segura do Cloudinary
-        fotoPublicId: req.file ? req.file.filename : null // ID para deletar
+        foto: req.file ? req.file.path : '',
+        fotoPublicId: req.file ? req.file.filename : null
     });
     await novoJogador.save();
     res.status(201).json(novoJogador);
 });
 
-app.put('/api/jogadores/:id', upload.single('foto'), async (req, res) => {
+app.put('/api/jogadores/:id', protect, upload.single('foto'), async (req, res) => {
     const jogadorId = Number(req.params.id);
     const jogador = await Jogador.findOne({ id: jogadorId });
     if (!jogador) return res.status(404).json({ message: 'Jogador não encontrado' });
@@ -131,7 +170,7 @@ app.put('/api/jogadores/:id', upload.single('foto'), async (req, res) => {
     res.status(200).json(jogador);
 });
 
-app.delete('/api/jogadores/:id', async (req, res) => {
+app.delete('/api/jogadores/:id', protect, async (req, res) => {
     const jogadorId = Number(req.params.id);
     const jogador = await Jogador.findOneAndDelete({ id: jogadorId });
     if (!jogador) return res.status(404).json({ message: 'Jogador não encontrado' });
@@ -141,26 +180,25 @@ app.delete('/api/jogadores/:id', async (req, res) => {
     res.status(200).json({ message: 'Jogador removido com sucesso' });
 });
 
-// --- API do Time do Mês ---
+// --- API do Time do Mês (Protegida) ---
 app.get('/api/time-do-mes', async (req, res) => {
     res.json(await findOrCreate(TimeDoMes, { docId: 'main', time1: {}, time2: {} }));
 });
-app.post('/api/time-do-mes', async (req, res) => {
+app.post('/api/time-do-mes', protect, async (req, res) => {
     const data = req.body;
     await TimeDoMes.findOneAndUpdate({ docId: 'main' }, data, { upsert: true });
     res.status(200).json({ message: 'Times salvos com sucesso!' });
 });
 
-// --- API da Caixinha ---
+// --- API da Caixinha (Protegida) ---
 app.get('/api/caixinha', async (req, res) => {
     res.json(await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] }));
 });
-app.post('/api/caixinha', async (req, res) => {
+app.post('/api/caixinha', protect, async (req, res) => {
     const caixinhaData = await findOrCreate(Caixinha, { docId: 'main', saldoTotal: 0, transacoes: [] });
     const novaTransacao = req.body;
     novaTransacao.id = Date.now();
     novaTransacao.data = new Date().toISOString();
-    
     if (novaTransacao.tipo === 'entrada') {
         caixinhaData.saldoTotal += novaTransacao.valor;
     } else {
@@ -171,11 +209,11 @@ app.post('/api/caixinha', async (req, res) => {
     res.status(201).json(caixinhaData);
 });
 
-// --- APIs de Pagamentos ---
+// --- APIs de Pagamentos (Protegida) ---
 app.get('/api/pagamentos', async (req, res) => {
     res.json(await findOrCreate(Pagamentos, { docId: 'main', valorChurrascoBase: 0, pagamentosJogadores: {} }));
 });
-app.post('/api/pagamentos/config', async (req, res) => {
+app.post('/api/pagamentos/config', protect, async (req, res) => {
     const { valorChurrascoBase } = req.body;
     const pagamentos = await Pagamentos.findOneAndUpdate(
         { docId: 'main' },
@@ -185,7 +223,7 @@ app.post('/api/pagamentos/config', async (req, res) => {
     res.status(200).json(pagamentos);
 });
 
-app.post('/api/pagamentos/pagar', async (req, res) => {
+app.post('/api/pagamentos/pagar', protect, async (req, res) => {
     const { jogadorId, jogadorNome, tipo, valor } = req.body;
     
     if (tipo === 'mensalidade') {
@@ -214,14 +252,14 @@ app.post('/api/pagamentos/pagar', async (req, res) => {
         pagamentos.pagamentosJogadores.set(String(jogadorId), {});
     }
     pagamentos.pagamentosJogadores.get(String(jogadorId))[tipo] = novaTransacao.id;
-    pagamentos.markModified('pagamentosJogadores'); // Precisa disso para salvar o Map
+    pagamentos.markModified('pagamentosJogadores');
     await pagamentos.save();
 
     res.status(200).json({ pagamentos, caixinha: caixinhaData });
 });
 
-// --- Rotas de Cancelar e Resetar ---
-app.post('/api/pagamentos/cancelar', async (req, res) => {
+// --- Rotas de Cancelar e Resetar (Protegida) ---
+app.post('/api/pagamentos/cancelar', protect, async (req, res) => {
     const { jogadorId, tipo } = req.body;
     const pagamentos = await findOrCreate(Pagamentos, { docId: 'main', valorChurrascoBase: 0, pagamentosJogadores: {} });
     
@@ -236,6 +274,7 @@ app.post('/api/pagamentos/cancelar', async (req, res) => {
     const transacaoIndex = caixinhaData.transacoes.findIndex(t => t.id === transacaoId);
     if (transacaoIndex === -1) {
         pagamentosDoJogador[tipo] = null;
+        pagamentos.markModified('pagamentosJogadores');
         await pagamentos.save();
         return res.status(404).json({ message: 'Transação na caixinha não encontrada, mas pagamento foi resetado.' });
     }
@@ -251,7 +290,7 @@ app.post('/api/pagamentos/cancelar', async (req, res) => {
     res.status(200).json({ pagamentos, caixinha: caixinhaData });
 });
 
-app.post('/api/pagamentos/reset', async (req, res) => {
+app.post('/api/pagamentos/reset', protect, async (req, res) => {
     const pagamentos = await Pagamentos.findOneAndUpdate(
         { docId: 'main' },
         { pagamentosJogadores: {} },
@@ -260,7 +299,7 @@ app.post('/api/pagamentos/reset', async (req, res) => {
     res.status(200).json(pagamentos);
 });
 
-app.post('/api/caixinha/reset', async (req, res) => {
+app.post('/api/caixinha/reset', protect, async (req, res) => {
     await Caixinha.findOneAndUpdate(
         { docId: 'main' },
         { saldoTotal: 0, transacoes: [] },
@@ -269,7 +308,7 @@ app.post('/api/caixinha/reset', async (req, res) => {
     res.status(200).json({ message: 'Caixinha zerada.' });
 });
 
-app.post('/api/time-do-mes/reset', async (req, res) => {
+app.post('/api/time-do-mes/reset', protect, async (req, res) => {
     await TimeDoMes.findOneAndUpdate(
         { docId: 'main' },
         { time1: { goleiro: null, linha: [], reservas: [] }, time2: { goleiro: null, linha: [], reservas: [] } },
@@ -278,7 +317,7 @@ app.post('/api/time-do-mes/reset', async (req, res) => {
     res.status(200).json({ message: 'Times limpos.' });
 });
 
-app.post('/api/jogadores/reset', async (req, res) => {
+app.post('/api/jogadores/reset', protect, async (req, res) => {
     const jogadores = await Jogador.find();
     for (const jogador of jogadores) {
         if (jogador.fotoPublicId) {

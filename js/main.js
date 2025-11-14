@@ -21,14 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.toggle('header-hidden');
             });
         }
-        // No celular, o header começa visível
+        // No celular, o header começa visível por padrão
         showHeader();
 
     } else {
         // Lógica de Desktop (Mouse) - CORRIGIDA
         const topZone = 80; // Altura da "zona quente" no topo
         
-        // Inicia visível, mas programa para esconder
+        // Começa visível, mas programa para esconder
         showHeader();
         hideHeaderTimer = setTimeout(hideHeader, 5000); 
         
@@ -83,6 +83,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }).format(value);
     };
 
+    // --- LÓGICA DE AUTENTICAÇÃO (NOVO) ---
+    const loginModal = document.getElementById('login-modal');
+    const loginBackdrop = document.getElementById('login-backdrop');
+    const btnOpenLogin = document.getElementById('btn-open-login');
+    const btnLogout = document.getElementById('btn-logout');
+    const formLogin = document.getElementById('form-login');
+    const btnCancelLogin = document.getElementById('btn-cancel-login');
+
+    const openLoginModal = () => {
+        if (loginModal) loginModal.style.display = 'block';
+        if (loginBackdrop) loginBackdrop.style.display = 'block';
+    };
+    const closeLoginModal = () => {
+        if (loginModal) loginModal.style.display = 'none';
+        if (loginBackdrop) loginBackdrop.style.display = 'none';
+    };
+
+    if (btnOpenLogin) btnOpenLogin.addEventListener('click', openLoginModal);
+    if (btnCancelLogin) btnCancelLogin.addEventListener('click', closeLoginModal);
+    if (loginBackdrop) loginBackdrop.addEventListener('click', closeLoginModal);
+
+    if (formLogin) {
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                if (!response.ok) throw new Error('Senha incorreta');
+                
+                document.body.classList.add('is-admin');
+                closeLoginModal();
+                showToast('Login com sucesso!', 'success');
+                location.reload(); 
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+    }
+
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                document.body.classList.remove('is-admin');
+                showToast('Deslogado.', 'success');
+                location.reload();
+            } catch (error) {
+                showToast('Erro ao deslogar.', 'error');
+            }
+        });
+    }
+
+    const checkAuthStatus = async () => {
+        try {
+            const response = await fetch('/api/check-auth');
+            if (response.ok) {
+                document.body.classList.add('is-admin');
+            } else {
+                document.body.classList.remove('is-admin');
+            }
+        } catch (error) {
+            document.body.classList.remove('is-admin');
+        }
+    };
+    
     // --- LÓGICA DO MODAL DE CONFIRMAÇÃO (GLOBAL) ---
     let confirmCallback = null;
     const openConfirmModal = (text, callback) => {
@@ -117,10 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- LÓGICA DA PÁGINA DE JOGADORES ---
-    // (O código desta seção é o mesmo da resposta anterior, está completo)
     const formAddJogador = document.getElementById('form-add-jogador');
     const listaJogadoresEl = document.getElementById('lista-jogadores');
+    
     if (formAddJogador && listaJogadoresEl) {
+        
         const fileInputAdd = document.getElementById('foto-jogador');
         const cropModal = document.getElementById('cropper-modal');
         const cropBackdrop = document.getElementById('cropper-backdrop');
@@ -135,10 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnCancelEdit = document.getElementById('btn-cancel-edit');
         const editJogadorIdInput = document.getElementById('edit-jogador-id');
         const btnResetJogadores = document.getElementById('btn-reset-jogadores');
+        
         let cropper;
         let croppedImageBlob = null; 
         let currentCropperCallback = null;
         const aspectRatio = 200 / 180;
+
         const openCropModal = (file, callback) => {
             if (!file || !file.type.startsWith('image/')) return;
             const reader = new FileReader();
@@ -186,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 'image/jpeg', 0.9);
         });
         if (cropBackdrop) cropBackdrop.addEventListener('click', closeCropModal);
+
         const openEditModal = (jogador) => {
             editJogadorIdInput.value = jogador.id;
             editNomeInput.value = jogador.nome;
@@ -202,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         btnCancelEdit.addEventListener('click', closeEditModal);
         editBackdrop.addEventListener('click', closeEditModal);
+
         formEditJogador.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = editJogadorIdInput.value;
@@ -223,6 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Falha ao atualizar jogador.', 'error');
             }
         });
+
         const criarCardJogador = (jogador) => {
             const card = document.createElement('div');
             card.classList.add('player-card');
@@ -230,8 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
             card.dataset.id = jogador.id;
             const fotoUrl = jogador.foto ? `${jogador.foto}?t=${new Date().getTime()}` : 'https://via.placeholder.com/200x180.png?text=Sem+Foto';
             card.innerHTML = `
-                <button class="btn-remover-jogador">X</button>
-                <button class="btn-editar-jogador">✏️</button>
+                <div class="admin-only">
+                    <button class="btn-remover-jogador">X</button>
+                    <button class="btn-editar-jogador">✏️</button>
+                </div>
                 <div class="card-image-wrapper">
                     <img src="${fotoUrl}" alt="${jogador.nome}">
                     <span class="player-name">${jogador.nome}</span>
@@ -258,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             listaJogadoresEl.appendChild(card);
         };
+
         const carregarJogadores = async () => {
             try {
                 const response = await fetch('/api/jogadores');
@@ -270,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Falha ao carregar jogadores.', 'error');
             }
         };
+
         formAddJogador.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!croppedImageBlob) {
@@ -293,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Falha ao adicionar jogador.', 'error');
             }
         });
+        
         btnResetJogadores.addEventListener('click', () => {
             openConfirmModal("TEM CERTEZA? Isso vai apagar TODOS os jogadores, fotos, pagamentos e times. Esta ação não pode ser desfeita.", async () => {
                 try {
@@ -305,13 +385,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+        
         carregarJogadores();
     }
 
     // --- LÓGICA DO TIME DO MÊS ---
     const teamBuilderContainer = document.getElementById('team-builder-container');
     if (teamBuilderContainer) {
-        // ... (todo o código do time do mês) ...
         let todosJogadores = [];
         let timeDoMes = {};
         let draggedPlayer = null;
@@ -470,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DA CAIXINHA ---
     const formCaixinha = document.getElementById('form-caixinha');
     if (formCaixinha) {
-        // ... (todo o código da caixinha) ...
+        
         const saldoDisplay = document.getElementById('saldo-total-display');
         const histLista = document.getElementById('hist-transacoes-lista');
         const jogadorSelect = document.getElementById('transacao-jogador');
@@ -578,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE PAGAMENTOS ---
     const pagamentosGrid = document.querySelector('.pagamentos-grid');
     if (pagamentosGrid) {
-        // ... (todo o código de pagamentos) ...
+        
         const valorChurrascoInput = document.getElementById('valor-churrasco');
         const btnSalvarChurrasco = document.getElementById('btn-salvar-churrasco');
         const resumoJogadores = document.getElementById('resumo-jogadores');
@@ -600,17 +680,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (jogador.isGoleiro) {
                     btnMensalidade = `<button class="btn-pagamento isento" disabled>Isento</button>`;
                 } else if (status.mensalidade) {
-                    btnMensalidade = `<button class="btn-pagamento cancelar" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
+                    btnMensalidade = `<button class="btn-pagamento cancelar admin-only" data-tipo="mensalidade" data-id="${jogador.id}" data-valor="${valorMensalidadePorJogador}">Cancelar</button>`;
                     totalArrecadado += valorMensalidadePorJogador;
+                    if(!document.body.classList.contains('is-admin')) btnMensalidade = `<button class="btn-pagamento pago" disabled>Pago</button>`;
                 } else {
-                    btnMensalidade = `<button class="btn-pagamento pagar" data-tipo="mensalidade" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${valorMensalidadePorJogador}">Pagar ${formatCurrency(valorMensalidadePorJogador)}</button>`;
+                    btnMensalidade = `<button class="btn-pagamento pagar admin-only" data-tipo="mensalidade" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${valorMensalidadePorJogador}">Pagar ${formatCurrency(valorMensalidadePorJogador)}</button>`;
+                    if(!document.body.classList.contains('is-admin')) btnMensalidade = `<span>Pendente</span>`;
                 }
                 let btnChurrasco;
                 if (status.churrasco) {
-                    btnChurrasco = `<button class="btn-pagamento cancelar" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
+                    btnChurrasco = `<button class="btn-pagamento cancelar admin-only" data-tipo="churrasco" data-id="${jogador.id}" data-valor="${pagamentosData.valorChurrascoBase}">Cancelar</button>`;
                     totalArrecadado += pagamentosData.valorChurrascoBase;
+                    if(!document.body.classList.contains('is-admin')) btnChurrasco = `<button class="btn-pagamento pago" disabled>Pago</button>`;
                 } else {
-                    btnChurrasco = `<button class="btn-pagamento pagar" data-tipo="churrasco" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${pagamentosData.valorChurrascoBase}">Pagar ${formatCurrency(pagamentosData.valorChurrascoBase)}</button>`;
+                    btnChurrasco = `<button class="btn-pagamento pagar admin-only" data-tipo="churrasco" data-id="${jogador.id}" data-nome="${jogador.nome}" data-valor="${pagamentosData.valorChurrascoBase}">Pagar ${formatCurrency(pagamentosData.valorChurrascoBase)}</button>`;
+                    if(!document.body.classList.contains('is-admin')) btnChurrasco = `<span>Pendente</span>`;
                 }
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -621,6 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tableBody.appendChild(tr);
             });
             resumoArrecadado.textContent = formatCurrency(totalArrecadado);
+            checkAuthStatus(); // Re-aplica as classes admin-only
         };
         const updateResumo = () => {
             const jogadoresDeLinha = todosJogadores.filter(j => !j.isGoleiro).length;
@@ -708,6 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const init = async () => {
             try {
+                await checkAuthStatus(); // Espera a verificação de auth
                 const [jogadoresRes, pagamentosRes] = await Promise.all([
                     fetch('/api/jogadores'),
                     fetch('/api/pagamentos')
